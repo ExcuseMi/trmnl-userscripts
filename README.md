@@ -1,27 +1,71 @@
 # TRMNL Userscripts
 
-A collection of userscripts to enhance the [TRMNL](https://trmnl.com) plugin editor experience.
+A small collection of userscripts that enhance the editing experience for the [TRMNL](https://trmnl.com) plugin editor.
 
-## Scripts
+These scripts improve usability, simplify navigation, and add helpful tools when working with plugin markup and layouts.
 
-### 🚫 No Floating Sidebar
-Moves the floating bottom sidebar into the top navigation bar for a cleaner, more compact editing interface.  
-**Install:** [no-floating-sidebar.user.js](https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/no-floating-sidebar.user.js)
+---
 
-### 🎨 Shared View Selector
-Adds a dropdown to quickly switch between layout templates (Full, Half Horizontal, Half Vertical, Quadrant) on the shared markup editor page. Fetches view templates from the plugin archive and injects them into preview requests automatically.  
-**Install:** [shared-view-selector.user.js](https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/shared-view-selector.user.js)
+# Scripts
 
-### Force refresh in the editor
-Add a button to force refresh the data in the editor.
-**Install:** [force-refresh-in-editor.user.js](https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/force-refresh-in-editor.user.js)
+## 🚫 No Floating Sidebar
 
-## Installation
+Moves the floating bottom sidebar into the top navigation bar, creating a cleaner and more compact editing interface.
 
-1. Install a userscript manager like [Violentmonkey](https://violentmonkey.github.io/), [Tampermonkey](https://www.tampermonkey.net/), or [Greasemonkey](https://www.greasespot.net/).
-2. Click any **Install** link above – the manager will prompt you to install the script.
-3. The script will automatically update when new versions are released.
+**Install:**
+https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/no-floating-sidebar.user.js
 
-## License
+---
 
-[MIT](LICENSE)
+## 🎨 Shared View Selector
+
+Adds a dropdown to the **Shared markup editor** that allows quick switching between layout templates:
+
+* Full
+* Half Horizontal
+* Half Vertical
+* Quadrant
+
+The script automatically fetches the corresponding view templates from the plugin archive and injects them into preview requests.
+
+**Install:**
+https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/shared-view-selector.user.js
+
+---
+
+## 🔄 Force Refresh in Editor
+
+Adds a **Force Refresh** button directly inside the markup editor interface.
+This allows you to manually refresh plugin data without navigating back to the plugin settings page.
+
+**Install:**
+https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/force-refresh-in-editor.user.js
+
+---
+
+# Installation
+
+1. Install a userscript manager:
+
+   * https://violentmonkey.github.io/
+   * https://www.tampermonkey.net/
+   * https://www.greasespot.net/
+
+2. Click one of the **Install** links above.
+
+3. Your userscript manager will prompt you to install the script.
+
+4. Scripts will automatically update when new versions are published.
+
+---
+
+# Contributing
+
+Contributions are welcome.
+If you have ideas for improving the TRMNL editor workflow, feel free to open an issue or submit a pull request.
+
+---
+
+# License
+
+MIT License
