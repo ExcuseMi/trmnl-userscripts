@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         No Floating Sidebar
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.0.1
+// @version      1.0.2
 // @description  Moves the floating bottom sidebar into the top navigation bar and makes it compact.
 // @author       ExcuseMi
-// @match        https://trmnl.com/plugin_settings/*/edit*
+// @match        https://trmnl.com/*
 // @downloadURL  https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/no-floating-sidebar.user.js
 // @updateURL    https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/no-floating-sidebar.user.js
 // @grant        none
