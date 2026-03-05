@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Shared View Selector
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.0.0
+// @version      1.0.1
 // @description  Adds a view layout combobox (shared page only). Fetches view templates from plugin archive and injects them into preview requests.
 // @author       ExcuseMi
 // @match        https://trmnl.com/plugin_settings/*/markup/edit*
@@ -47,7 +47,7 @@
   let uiInjected = false;
 
   let _skipPatch = false;
-  const DEBUG = true; // Set false to disable logs
+  const DEBUG = false; // Set false to disable logs
 
   function log(...args) {
     if (DEBUG) console.log('[TRMNL View Selector]', ...args);
@@ -101,77 +101,26 @@
     return getCurrentSize() === 'markup_shared';
   }
 
-  // --- FormData patch (backup for non-fetch submissions, but rarely used) ---
-  const _origAppend = FormData.prototype.append;
-  FormData.prototype.append = function (name, value) {
-    if (_skipPatch) return _origAppend.call(this, name, value);
-    if (name === 'markup' && active) {
-      const textarea = document.querySelector('[data-codemirror-target="textarea"], [data-markup-editor-target="textarea"]');
-      const userMarkup = textarea ? textarea.value : '';
-      const viewClass = getViewClass();
-      const fileKey = VIEW_TO_FILE[viewClass] || 'shared';
-      const viewCode = (viewFilesCache && viewFilesCache[fileKey]) || '';
-      value = userMarkup + '\n' + viewCode;
-      return _origAppend.call(this, name, value);
-    }
-    return _origAppend.call(this, name, value);
-  };
 
   const getViewClass = () => localStorage.getItem(STORAGE_KEY) ?? 'view--full';
   const setViewClass = (v) => localStorage.setItem(STORAGE_KEY, v);
 
   // --- Manual preview refresh (used after dropdown change) ---
   async function refreshPreview() {
-    const controllerEl = document.querySelector('[data-codemirror-preview-path-value], [data-markup-editor-preview-path-value]');
-    let previewUrl = controllerEl?.dataset?.codemirrorPreviewPathValue
-                  ?? controllerEl?.dataset?.markupEditorPreviewPathValue;
-    if (!previewUrl) {
-      console.warn('[TRMNL View Selector] refreshPreview: preview URL not found');
-      return;
-    }
-    const ourViewClass = getViewClass();
-    const sizeParam = VIEW_TO_SIZE[ourViewClass] || 'markup_shared';
-    previewUrl = setSizeParam(previewUrl, sizeParam);
-
-    await viewFilesPromise;
-
-    const fileKey = VIEW_TO_FILE[ourViewClass];
-    const viewCode = viewFilesCache?.[fileKey] || '';
-
-    const textarea = document.querySelector('[data-codemirror-target="textarea"], [data-markup-editor-target="textarea"]');
-    const userMarkup = textarea ? textarea.value : '';
-
-    const controller = document.querySelector('[data-controller="markup-editor"]');
-    const sharedMarkup = controller?.dataset?.markupEditorSharedMarkupValue || '';
-
-    const fullMarkup = sharedMarkup + userMarkup + '\n' + viewCode;
-
-    const csrf = document.querySelector("meta[name='csrf-token']")?.content;
-    const iframe = document.querySelector('[data-codemirror-target="previewIframe"], [data-markup-editor-target="previewIframe"]');
-
-    if (!iframe || !csrf) {
-      console.warn('[TRMNL View Selector] refreshPreview: missing iframe or CSRF token');
+    const element = document.querySelector('[data-controller~="codemirror"]');
+    if (!element) {
+      console.warn('CodeMirror element not found');
       return;
     }
 
-    const fd = new FormData();
-    _origAppend.call(fd, 'markup', fullMarkup);
-    _origAppend.call(fd, 'authenticity_token', csrf);
-    _origAppend.call(fd, 'screen_classes', '');
-
-    try {
-      const res = await fetch(previewUrl, { method: 'POST', body: fd });
-      iframe.srcdoc = await res.text();
-    } catch (err) {
-      console.warn('[TRMNL View Selector] Preview refresh failed:', err);
+    const controller = window.Stimulus?.getControllerForElementAndIdentifier(element, 'codemirror');
+    if (controller) {
+      controller.updatePreview();
+    } else {
+      console.warn('CodeMirror Stimulus controller not found');
     }
   }
 
-  function setSizeParam(url, sizeValue) {
-    const urlObj = new URL(url, window.location.origin);
-    urlObj.searchParams.set('size', sizeValue);
-    return urlObj.pathname + urlObj.search;
-  }
 
   // --- FETCH INTERCEPTOR (modifies size and appends view template) ---
   const originalFetch = window.fetch;
