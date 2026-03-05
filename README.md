@@ -12,6 +12,10 @@ Moves the floating bottom sidebar into the top navigation bar for a cleaner, mor
 Adds a dropdown to quickly switch between layout templates (Full, Half Horizontal, Half Vertical, Quadrant) on the shared markup editor page. Fetches view templates from the plugin archive and injects them into preview requests automatically.  
 **Install:** [shared-view-selector.user.js](https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/shared-view-selector.user.js)
 
+### Force refresh in the editor
+Add a button to force refresh the data in the editor.
+**Install:** [force-refresh-in-editor.user.js](https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/force-refresh-in-editor.user.js)
+
 ## Installation
 
 1. Install a userscript manager like [Violentmonkey](https://violentmonkey.github.io/), [Tampermonkey](https://www.tampermonkey.net/), or [Greasemonkey](https://www.greasespot.net/).

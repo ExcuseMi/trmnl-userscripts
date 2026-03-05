@@ -56,7 +56,7 @@
       li.className = "me-2 vm-force-refresh";
 
       const a = document.createElement("a");
-      a.textContent = "Force refresh";
+      a.textContent = "Force Refresh Data";
       a.href = "#";
       a.className =
         "inline-flex items-center justify-center p-4 border-b-2 border-transparent hover:text-gray-600 hover:border-gray-300";
@@ -64,7 +64,7 @@
       a.onclick = async (e) => {
         e.preventDefault();
 
-        if (!confirm("Force refresh plugin?")) return;
+        if (!confirm("Force Force Refresh Data for this plugin?")) return;
 
         await fetch(href, {
           method: "POST",
