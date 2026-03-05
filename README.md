@@ -33,15 +33,6 @@ https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/shared-view-se
 
 ---
 
-## 🔄 Force Refresh in Editor
-
-Adds a **Force Refresh** button directly inside the markup editor interface.
-This allows you to manually refresh plugin data without navigating back to the plugin settings page.
-
-**Install:**
-https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/force-refresh-in-editor.user.js
-
----
 
 # Installation
 
