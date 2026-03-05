@@ -48,12 +48,6 @@ https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/shared-view-se
 
 4. Scripts will automatically update when new versions are published.
 
----
-
-# Contributing
-
-Contributions are welcome.
-If you have ideas for improving the TRMNL editor workflow, feel free to open an issue or submit a pull request.
 
 ---
 
