@@ -15,11 +15,26 @@ Adds a toggle button to the markup editor toolbar that keeps the **preview panel
 ![sticky-preview.png](images/sticky-preview.png)
 
 **Icon:**
-
-![sticky-preview.png](images/sticky-preview.png)
+![sticky-preview-icon.png](images/sticky-preview-icon.png)
 
 **Install:**
 https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/sticky-preview.user.js
+
+---
+
+##   Better variables
+
+Adds **Copy** and **Download** buttons for JSON & YAML to the "Your Variables" on the markup editor.
+Uses a nicer viewer with colors, collapsing, copy paths and more.
+Show the total size in KB.
+
+**Screenshots:**
+
+![better-variables.png](images/better-variables.png)
+![better-variables-2.png](images/better-variables-2.png)
+
+**Install:**
+https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/better-variables.user.js
 
 ---
 

@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         TRMNL Recipe Edit Button
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.0.0
+// @version      1.0.1
 // @description  Add an Edit button on recipe pages you own
 // @author       ExcuseMi
-// @match        https://trmnl.com/*
+// @match        https://trmnl.com/recipes/*
 // @icon         https://trmnl.com/favicon.ico
 // @downloadURL  https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/recipe-edit-button.user.js
 // @updateURL    https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/recipe-edit-button.user.js
