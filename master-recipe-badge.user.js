@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TRMNL Master Recipe Badges
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.4.2
+// @version      1.4.3
 // @description  Add install and forks badges to Recipe Master plugins on list page and edit page
 // @author       ExcuseMi
 // @match        https://trmnl.com/plugin_settings*
@@ -115,19 +115,34 @@
         }
     }
 
-    // Original list page functions (copied from your script)
-    function waitForPluginList() {
-        if (trySetup()) return;
+    function waitForEditPage() {
+        if (handleEditPage()) return;
 
-        const observeTarget = document.querySelector('[data-controller="plugin-settings"]') || document.documentElement;
-        log('List page: Content not ready, observing:', observeTarget.tagName);
+        const observeTarget = document.querySelector('main') || document.body;
+        log('Edit page: Actions container not ready, observing:', observeTarget.tagName);
 
         const observer = new MutationObserver(() => {
-            if (trySetup()) {
+            if (addEditPageBadges(getPluginIdFromEditUrl())) {
                 observer.disconnect();
             }
         });
         observer.observe(observeTarget, { childList: true, subtree: true });
+        setTimeout(() => observer.disconnect(), 15_000);
+    }
+
+    // Original list page functions
+    function waitForPluginList() {
+        trySetup();
+
+        const observeTarget = document.querySelector('[data-controller="plugin-settings"]') || document.documentElement;
+        log('List page: Starting observer on:', observeTarget.tagName);
+
+        // Keep observing — rows or their badge spans may load after initial query.
+        // BADGE_ATTR guards prevent double-processing.
+        const observer = new MutationObserver(() => trySetup());
+        observer.observe(observeTarget, { childList: true, subtree: true });
+        // Safety disconnect after 30s
+        setTimeout(() => observer.disconnect(), 30_000);
     }
 
     function trySetup() {
@@ -139,10 +154,14 @@
 
         let added = 0;
         pluginRows.forEach(row => {
-            if (row.hasAttribute(BADGE_ATTR)) return;
+            if (row.getAttribute(BADGE_ATTR) === 'done') return;
 
             const badgeSpan = row.querySelector('.inline-block.bg-gray-100.text-gray-600.text-xs.font-medium');
-            const badgeText = badgeSpan ? badgeSpan.textContent.trim() : null;
+            // If the badge span hasn't rendered yet, leave the row unmarked so the
+            // observer can retry on the next mutation.
+            if (!badgeSpan) return;
+
+            const badgeText = badgeSpan.textContent.trim();
             if (badgeText !== 'Recipe Master') {
                 row.setAttribute(BADGE_ATTR, 'skipped');
                 return;
@@ -178,7 +197,6 @@
             installsLink.appendChild(installsImg);
             badgeContainer.appendChild(installsLink);
 
-            // Add forks badge to list page too
             const forksLink = document.createElement('a');
             forksLink.href = `https://trmnl.com/recipes/${pluginId}`;
             forksLink.target = '_blank';
@@ -198,7 +216,7 @@
         });
 
         log(`List page: trySetup: ${added} badge(s) added, ${pluginRows.length} row(s) total.`);
-        return true;
+        return added > 0;
     }
 
     // Main navigation handler
@@ -208,12 +226,10 @@
             waitForPluginList();
         } else if (isEditPage()) {
             log('On edit page. URL:', location.href);
-            // Use setTimeout to ensure DOM is ready
-            setTimeout(handleEditPage, 100);
+            waitForEditPage();
         }
     }
 
-    // Start observing for both page types
     log('Script loaded. readyState:', document.readyState);
 
     document.addEventListener('turbo:load', () => {
@@ -233,25 +249,5 @@
         });
     } else {
         onNavigate();
-    }
-
-    // Observer for dynamic content on edit pages
-    const observer = new MutationObserver(() => {
-        if (isEditPage()) {
-            handleEditPage();
-        }
-    });
-
-    function startObserving() {
-        if (isEditPage()) {
-            const target = document.querySelector('main') || document.body;
-            observer.observe(target, { childList: true, subtree: true });
-        }
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', startObserving);
-    } else {
-        startObserving();
     }
 })();
