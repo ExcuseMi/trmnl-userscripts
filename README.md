@@ -43,6 +43,10 @@ https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/better-variabl
 
 Moves the floating bottom sidebar into the top navigation bar, creating a cleaner and more compact editing interface.
 
+**Screenshots:**
+
+![no-floating.png](images/no-floating.png)
+
 **Install:**
 https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/no-floating-sidebar.user.js
 
@@ -58,6 +62,9 @@ Adds a dropdown to the **Shared markup editor** that allows quick switching betw
 * Quadrant
 
 The script automatically fetches the corresponding view templates from the plugin archive and injects them into preview requests.
+**Screenshots:**
+
+![shared-view.png](images/shared-view.png)
 
 **Install:**
 https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/shared-view-selector.user.js
@@ -89,9 +96,9 @@ https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/recipe-edit-bu
 
 ---
 
-## 🏷️ Recipe Master Badges
+## 🏷️ Recipe Master Badge
 
-Adds install and fork count badges to every **Recipe Master** plugin on the private plugins page. Badges are clickable and link directly to the plugin’s recipe page. Uses the [TRMNL Badges](https://hossain-khan.github.io/trmnl-badges/) service.
+Adds connection count badges to every **Recipe Master** plugin on the private plugins page. Badges are clickable and link directly to the plugin’s recipe page. Uses the [TRMNL Badges](https://hossain-khan.github.io/trmnl-badges/) service.
 
 ![Badges example](images/badges.png)
 
@@ -100,7 +107,7 @@ https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/master-recipe-
 
 ---
 
-## 👤 User Stats Badges
+## 👤 User Stats Badge
 
 Displays your personal connection count badge next to the “Private Plugin” title. Also powered by the [TRMNL Badges](https://hossain-khan.github.io/trmnl-badges/) service.
 
