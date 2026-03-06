@@ -4,7 +4,7 @@
 // @version      1.4.0
 // @description  Add install and forks badges to Recipe Master plugins on list page and edit page
 // @author       ExcuseMi
-// @match        https://trmnl.com/*
+// @match        https://trmnl.com/plugin_settings*
 // @icon         https://trmnl.com/favicon.ico
 // @downloadURL  https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/master-recipe-badges.user.js
 // @updateURL    https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/master-recipe-badges.user.js
