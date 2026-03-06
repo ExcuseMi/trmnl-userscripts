@@ -32,7 +32,18 @@ The script automatically fetches the corresponding view templates from the plugi
 https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/shared-view-selector.user.js
 
 ---
+## 📋 Private Plugin Organiser
 
+Adds category filters (All, Recipe Master, Fork, Install, Private) and a search bar to the private plugins page. Remembers your last selection and resets if no plugins match, ensuring you always see relevant content.
+
+**Screenshot:**
+![private-plugin-organiser](images/private-plugin-organiser.png)
+
+
+**Install:**
+https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/private-plugin-organiser.user.js
+
+---
 
 # Installation
 
