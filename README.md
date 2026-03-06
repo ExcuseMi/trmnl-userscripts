@@ -97,13 +97,15 @@ https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/recipe-edit-bu
 
 ---
 
-## 🏷️ Recipe Master Badge
+## 🏷️ Recipe Master Badges
 
 Adds connection count badges to every **Recipe Master** plugin on the private plugins page. Badges are clickable and link directly to the plugin’s recipe page. Uses the [TRMNL Badges](https://hossain-khan.github.io/trmnl-badges/) service.
 *These are a bit too much visual clutter for me (as in too many orange highlights on one page), but I'll leave it up to the user.*
-**Screenshot:**
+**Screenshots:**
 
-![Badges example](images/badges.png)
+![recipe-badges.png](images/recipe-badges.png)
+
+![badge-on-edit.png](images/badge-on-edit.png)
 
 **Install:**
 https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/master-recipe-badge.user.js
@@ -114,6 +116,9 @@ https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/master-recipe-
 
 Displays your personal connection count badge next to the “Private Plugin” title. Also powered by the [TRMNL Badges](https://hossain-khan.github.io/trmnl-badges/) service.
 *These are a bit too much visual clutter for me (as in too many orange highlights on one page), but I'll leave it up to the user.*
+
+**Screenshots:**
+![user-badge.png](images/user-badge.png)
 
 **Install:**
 https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/user-stats-badge.user.js
