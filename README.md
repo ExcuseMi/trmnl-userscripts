@@ -32,7 +32,37 @@ The script automatically fetches the corresponding view templates from the plugi
 https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/shared-view-selector.user.js
 
 ---
+## 📋 Private Plugin Organiser
 
+Adds category filters (All, Recipe Master, Fork, Install, Private) and a search bar to the private plugins page. Remembers your last selection and resets if no plugins match, ensuring you always see relevant content.
+
+**Screenshot:**
+![private-plugin-organiser](images/private-plugin-organiser.png)
+
+
+**Install:**
+https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/private-plugin-organiser.user.js
+
+
+## 🏷️ Recipe Master Badges
+
+Adds install and fork count badges to every **Recipe Master** plugin on the private plugins page. Badges are clickable and link directly to the plugin’s recipe page. Uses the [TRMNL Badges](https://hossain-khan.github.io/trmnl-badges/) service.
+
+![Badges example](images/badges.png)
+
+**Install:**
+https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/master-recipe-badge.user.js
+
+---
+
+## 👤 User Stats Badges
+
+Displays your personal connection count badge next to the “Private Plugin” title. Also powered by the [TRMNL Badges](https://hossain-khan.github.io/trmnl-badges/) service.
+
+**Install:**
+https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/user-stats-badge.user.js
+
+---
 
 # Installation
 
