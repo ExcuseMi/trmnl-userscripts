@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         TRMNL Export Variables
+// @name         TRMNL Better Variables
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.0.0
-// @description  Replaces the variables accordion with an interactive JSON tree viewer + YAML export.
+// @version      1.1.0
+// @description  Replaces the variables accordion with an interactive JSON tree viewer + YAML export with copy features.
 // @author       ExcuseMi
 // @match        https://trmnl.com/plugin_settings/*/markup/edit*
 // @icon         https://trmnl.com/favicon.ico
@@ -15,8 +15,8 @@
 (function () {
   'use strict';
 
-  const WIDGET_ID = 'trmnl-export-vars-widget';
-  const STYLE_ID  = 'trmnl-export-vars-style';
+  const WIDGET_ID = 'trmnl-better-vars-widget';
+  const STYLE_ID  = 'trmnl-better-vars-style';
 
   let cachedData = null;
   let format     = 'json'; // 'json' | 'yaml'
@@ -140,14 +140,6 @@
     setTimeout(() => { el.textContent = prev; }, 900);
   }
 
-  function svgBtn(label, pathD) {
-    const btn = mk('button', 'ev-btn');
-    btn.type = 'button';
-    btn.innerHTML = `<svg width="13" height="13" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 256 256" aria-hidden="true"><path d="${pathD}"/></svg>`;
-    btn.appendChild(mk('span', null, label));
-    return btn;
-  }
-
   // ---------------------------------------------------------------------------
   // JSON tree builder
   // ---------------------------------------------------------------------------
@@ -258,60 +250,182 @@
   }
 
   // ---------------------------------------------------------------------------
-  // YAML syntax-highlighted viewer
+  // YAML syntax-highlighted viewer with interactive features
   // ---------------------------------------------------------------------------
 
-  function yamlVal(s) {
-    if (!s) return mk('span');
-    if (s === 'null' || s === '~')       return mk('span', 'jv-null', s);
-    if (s === 'true' || s === 'false')   return mk('span', 'jv-bool', s);
-    if (/^-?\d+(\.\d+)?([eE][+-]?\d+)?$/.test(s)) return mk('span', 'jv-num', s);
-    return mk('span', 'jv-str', s);
+  function yamlValWithCopy(val, path) {
+    const span = mk('span');
+
+    // Handle different value types
+    if (val === 'null' || val === '~') {
+      span.className = 'jv-null jv-copy';
+      span.textContent = val;
+    } else if (val === 'true' || val === 'false') {
+      span.className = 'jv-bool jv-copy';
+      span.textContent = val;
+    } else if (/^-?\d+(\.\d+)?([eE][+-]?\d+)?$/.test(val)) {
+      span.className = 'jv-num jv-copy';
+      span.textContent = val;
+    } else {
+      span.className = 'jv-str jv-copy';
+      span.textContent = val;
+    }
+
+    if (path) {
+      span.title = 'Click to copy value';
+      span.addEventListener('click', e => {
+        e.stopPropagation();
+        // Remove quotes if present
+        const value = val.startsWith('"') && val.endsWith('"')
+          ? val.slice(1, -1)
+          : val;
+        copyText(value, span, '✓');
+      });
+    }
+
+    return span;
   }
 
-  function buildYamlView(text) {
+  function buildYamlView(text, data) {
     const container = mk('div', 'ev-yaml-view');
     const lines = text.split('\n');
     // Drop trailing empty line from toYaml's trailing \n
     if (lines[lines.length - 1] === '') lines.pop();
+
+    // Build a map of paths to values for the YAML structure
+    function buildPathMap(obj, basePath = '') {
+      let map = new Map();
+      for (const [key, value] of Object.entries(obj)) {
+        const currentPath = basePath ? `${basePath}.${key}` : key;
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          // Nested object
+          map.set(currentPath, { type: 'object', value });
+          const nestedMap = buildPathMap(value, currentPath);
+          nestedMap.forEach((v, k) => map.set(k, v));
+        } else if (Array.isArray(value)) {
+          // Array
+          map.set(currentPath, { type: 'array', value });
+          value.forEach((item, index) => {
+            const arrayPath = `${currentPath}[${index}]`;
+            if (item && typeof item === 'object') {
+              map.set(arrayPath, { type: 'object', value: item });
+              const nestedMap = buildPathMap(item, arrayPath);
+              nestedMap.forEach((v, k) => map.set(k, v));
+            } else {
+              map.set(arrayPath, { type: typeof item, value: item });
+            }
+          });
+        } else {
+          // Scalar
+          map.set(currentPath, { type: typeof value, value });
+        }
+      }
+      return map;
+    }
+
+    const pathMap = buildPathMap(data);
+
     lines.forEach(line => {
       const row = mk('div', 'yv-row');
-      // "  - key: value" or "- key: value"
+
+      // Handle array items with key-value pairs: "  - key: value"
       const mDashKey = line.match(/^(\s*)-\s+([\w-]+):\s*(.*)$/);
       if (mDashKey) {
         const [, indent, key, val] = mDashKey;
         row.appendChild(document.createTextNode(indent));
-        row.appendChild(mk('span', 'yv-dash', '- '));
-        row.appendChild(mk('span', 'jv-key', key));
+
+        // Dash
+        const dash = mk('span', 'yv-dash', '- ');
+        row.appendChild(dash);
+
+        // Key with copy functionality
+        const keySpan = mk('span', 'jv-key jv-copy', key);
+        keySpan.title = `Click to copy {{ ${key} }}`;
+        keySpan.addEventListener('click', e => {
+          e.stopPropagation();
+          copyText(`{{ ${key} }}`, keySpan, '✓');
+        });
+        row.appendChild(keySpan);
+
         row.appendChild(mk('span', 'jv-p', ':'));
-        if (val) { row.appendChild(document.createTextNode(' ')); row.appendChild(yamlVal(val)); }
+
+        if (val) {
+          row.appendChild(document.createTextNode(' '));
+          // Try to find the actual value in our path map
+          const value = val.startsWith('"') && val.endsWith('"')
+            ? val.slice(1, -1)
+            : val;
+          row.appendChild(yamlValWithCopy(value, key));
+        }
         container.appendChild(row);
         return;
       }
-      // "  - scalar" or bare "- "
+
+      // Handle bare array items: "  - value"
       const mDash = line.match(/^(\s*)-\s*(.*)$/);
       if (mDash) {
         const [, indent, rest] = mDash;
         row.appendChild(document.createTextNode(indent));
         row.appendChild(mk('span', 'yv-dash', '- '));
-        if (rest) row.appendChild(yamlVal(rest));
+        if (rest) {
+          // For array items, we need to determine if it's a scalar or object start
+          if (rest.startsWith('{') || rest.startsWith('}') || rest.startsWith('[') || rest.startsWith(']')) {
+            row.appendChild(mk('span', 'jv-p', rest));
+          } else {
+            row.appendChild(yamlValWithCopy(rest));
+          }
+        }
         container.appendChild(row);
         return;
       }
-      // "  key: value" or "key:"
+
+      // Handle key-value pairs: "  key: value"
       const mKey = line.match(/^(\s*)([\w-]+):\s*(.*)$/);
       if (mKey) {
         const [, indent, key, val] = mKey;
         row.appendChild(document.createTextNode(indent));
-        row.appendChild(mk('span', 'jv-key', key));
+
+        // Key with copy functionality
+        const keySpan = mk('span', 'jv-key jv-copy', key);
+        keySpan.title = `Click to copy {{ ${key} }}`;
+        keySpan.addEventListener('click', e => {
+          e.stopPropagation();
+          copyText(`{{ ${key} }}`, keySpan, '✓');
+        });
+        row.appendChild(keySpan);
+
         row.appendChild(mk('span', 'jv-p', ':'));
-        if (val) { row.appendChild(document.createTextNode(' ')); row.appendChild(yamlVal(val)); }
+
+        if (val) {
+          row.appendChild(document.createTextNode(' '));
+          // Check if it's a complex structure start
+          if (val.startsWith('{') || val.startsWith('}') || val.startsWith('[') || val.startsWith(']')) {
+            row.appendChild(mk('span', 'jv-p', val));
+          } else {
+            row.appendChild(yamlValWithCopy(val, key));
+          }
+        }
         container.appendChild(row);
         return;
       }
-      row.appendChild(document.createTextNode(line));
+
+      // Handle brackets and other structural elements
+      if (line.includes('{') || line.includes('}') || line.includes('[') || line.includes(']')) {
+        const parts = line.split(/([{}[\]])/g);
+        parts.forEach(part => {
+          if (part === '{' || part === '}' || part === '[' || part === ']') {
+            row.appendChild(mk('span', 'jv-p', part));
+          } else if (part) {
+            row.appendChild(document.createTextNode(part));
+          }
+        });
+      } else {
+        row.appendChild(document.createTextNode(line));
+      }
+
       container.appendChild(row);
     });
+
     return container;
   }
 
@@ -325,28 +439,6 @@
     const s = mk('style');
     s.id = STYLE_ID;
     s.textContent = `
-      ${W} { font-family: ui-monospace,'Cascadia Code','Fira Code',monospace; font-size:12px; line-height:1.7; overflow-x:auto; max-width:100%; }
-      ${W} .ev-toolbar { display:flex; align-items:center; gap:0.4rem; margin-bottom:0.6rem; flex-wrap:wrap; }
-      ${W} .ev-size    { margin-left:auto; color:#9ca3af; font-size:11px; }
-      ${W} .ev-fmt-group { display:inline-flex; border-radius:6px; overflow:hidden; border:1px solid #d1d5db; }
-      .dark ${W} .ev-fmt-group { border-color:#4b5563; }
-      ${W} .ev-btn {
-        display:inline-flex; align-items:center; gap:4px; padding:3px 8px;
-        font-size:11px; font-weight:500; font-family:inherit;
-        cursor:pointer; border:0; border-radius:6px; transition:background 150ms;
-        color:#374151; background:#e5e7eb;
-      }
-      ${W} .ev-btn:hover { background:#d1d5db; }
-      .dark ${W} .ev-btn { color:#d1d5db; background:#374151; }
-      .dark ${W} .ev-btn:hover { background:#4b5563; }
-      ${W} .ev-fmt-group .ev-btn { border-radius:0; }
-      ${W} .ev-fmt-group .ev-btn:first-child { border-radius:5px 0 0 5px; }
-      ${W} .ev-fmt-group .ev-btn:last-child  { border-radius:0 5px 5px 0; }
-      ${W} .ev-fmt-group .ev-btn.ev-active { background:#374151; color:#f9fafb; }
-      ${W} .ev-fmt-group .ev-btn.ev-active:hover { background:#4b5563; }
-      .dark ${W} .ev-fmt-group .ev-btn.ev-active { background:#e5e7eb; color:#111827; }
-      .dark ${W} .ev-fmt-group .ev-btn.ev-active:hover { background:#d1d5db; }
-
       /* JSON tree */
       ${W} .jv-body    { padding-left:1.25rem; }
       ${W} .jv-row     { display:flex; flex-wrap:wrap; align-items:baseline; gap:0.15rem; }
@@ -361,7 +453,7 @@
       ${W} .jv-null    { color:#9ca3af; }
       ${W} .jv-p       { color:#6b7280; }
       ${W} .jv-preview { color:#9ca3af; font-style:italic; }
-      ${W} .jv-copy    { cursor:copy; border-radius:2px; }
+      ${W} .jv-copy    { cursor:copy; border-radius:2px; padding:0 2px; }
       ${W} .jv-copy:hover { background:rgba(0,0,0,.06); outline:1px dashed #9ca3af; }
       ${W} .jv-obj-copy {
         display:none; margin-left:auto; padding:0 3px; font-size:10px;
@@ -380,10 +472,36 @@
       .dark ${W} .jv-copy:hover { background:rgba(255,255,255,.07); }
       .dark ${W} .jv-obj-copy:hover { background:rgba(255,255,255,.09); color:#e5e7eb; }
 
-      /* YAML viewer */
-      ${W} .ev-yaml-view { }
-      ${W} .yv-row { white-space:pre-wrap; word-break:break-all; overflow-wrap:anywhere; }
-      ${W} .yv-dash { color:#9ca3af; }
+      /* Enhanced YAML viewer styles */
+      ${W} .ev-yaml-view {
+        line-height: 1.7;
+      }
+      ${W} .yv-row {
+        white-space: pre-wrap;
+        word-break: break-all;
+        overflow-wrap: anywhere;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 0.15rem;
+      }
+      ${W} .yv-dash {
+        color: #9ca3af;
+        margin-right: 0.15rem;
+      }
+      .dark ${W} .yv-dash {
+        color: #64748b;
+      }
+
+      /* Key hover effect specific to YAML */
+      ${W} .jv-key.jv-copy:hover {
+        background: rgba(37, 99, 235, 0.1);
+        outline: 1px dashed #2563eb;
+      }
+      .dark ${W} .jv-key.jv-copy:hover {
+        background: rgba(125, 211, 252, 0.1);
+        outline: 1px dashed #7dd3fc;
+      }
     `;
     document.head.appendChild(s);
   }
@@ -404,37 +522,88 @@
     if (!Object.keys(data).length) return false;
     cachedData = data;
 
+    // Create widget with the same classes as the JS Logs component
     const widget = mk('div');
     widget.id = WIDGET_ID;
-    widget.className = 'p-4';
+    widget.className = 'border border-gray-200 rounded-lg dark:border-gray-700'; // Main container
+
+    // Create header matching the JS Logs button
+    const header = mk('h2');
+    const headerButton = mk('button');
+    headerButton.type = 'button';
+    headerButton.className = 'flex items-center justify-between w-full py-2 px-4 font-medium rtl:text-right border [&[aria-expanded=true]]:!border-b-0 border-gray-200 rounded-lg [&[aria-expanded=true]]:rounded-b-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-800 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 gap-3 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white';
+    headerButton.setAttribute('aria-expanded', 'true');
+
+    // Header content with icon
+    const headerSpan = mk('span', 'flex items-center gap-2');
+    headerSpan.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" class="size-5" width="32" height="32" fill="currentColor" viewBox="0 0 256 256">
+            <path d="M128,128a8,8,0,0,1-3,6.25l-40,32a8,8,0,1,1-10-12.5L107.19,128,75,102.25a8,8,0,1,1,10-12.5l40,32A8,8,0,0,1,128,128Zm48,24H136a8,8,0,0,0,0,16h40a8,8,0,0,0,0-16Zm56-96V200a16,16,0,0,1-16,16H40a16,16,0,0,1-16-16V56A16,16,0,0,1,40,40H216A16,16,0,0,1,232,56ZM216,200V56H40V200H216Z"></path>
+        </svg>
+        Variables
+    `;
+
+    // Arrow icon
+    const arrowSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    arrowSvg.setAttribute('class', 'w-3 h-3 shrink-0');
+    arrowSvg.setAttribute('viewBox', '0 0 10 6');
+    arrowSvg.innerHTML = '<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"></path>';
+
+    headerButton.appendChild(headerSpan);
+    headerButton.appendChild(arrowSvg);
+    header.appendChild(headerButton);
+
+    // Create body with same classes as JS Logs body
+    const bodyDiv = mk('div');
+    bodyDiv.className = 'p-4 border rounded-b-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-white text-sm font-mono';
 
     // Format toggle (segmented control)
-    const fmtGroup  = mk('div', 'ev-fmt-group');
-    const jsonBtn   = mk('button', 'ev-btn', 'JSON');
-    const yamlBtn   = mk('button', 'ev-btn', 'YAML');
+    const fmtGroup  = mk('div', 'inline-flex rounded-md shadow-sm mb-4');
+    const jsonBtn   = mk('button', 'px-4 py-2 text-sm font-medium border border-gray-200 rounded-l-lg bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 focus:z-10 focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-600', 'JSON');
+    const yamlBtn   = mk('button', 'px-4 py-2 text-sm font-medium border border-gray-200 rounded-r-lg bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 focus:z-10 focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-600', 'YAML');
     jsonBtn.type    = 'button';
     yamlBtn.type    = 'button';
-    fmtGroup.appendChild(jsonBtn);
-    fmtGroup.appendChild(yamlBtn);
 
-    // Copy / Download
-    const copyBtn     = svgBtn('Copy',     'M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z');
-    const downloadBtn = svgBtn('Download', 'M224,152v56a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V152a8,8,0,0,1,16,0v56H208V152a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,132.69V40a8,8,0,0,0-16,0v92.69L93.66,106.34a8,8,0,0,0-11.32,11.32Z');
-    const sizeEl = mk('span', 'ev-size');
+    // Copy button with proper styling
+    const copyBtn = mk('button', 'px-4 py-2 text-sm font-medium border border-gray-200 rounded-lg bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 focus:z-10 focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-600 inline-flex items-center gap-2');
+    copyBtn.type = 'button';
+    copyBtn.innerHTML = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 256 256"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></svg> Copy JSON`;
+
+    // Download button
+    const downloadBtn = mk('button', 'px-4 py-2 text-sm font-medium border border-gray-200 rounded-lg bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 focus:z-10 focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-600 inline-flex items-center gap-2');
+    downloadBtn.type = 'button';
+    downloadBtn.innerHTML = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 256 256"><path d="M224,152v56a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V152a8,8,0,0,1,16,0v56H208V152a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,132.69V40a8,8,0,0,0-16,0v92.69L93.66,106.34a8,8,0,0,0-11.32,11.32Z"/></svg> Download .json`;
+
+    const sizeEl = mk('span', 'ml-auto text-xs text-gray-500 dark:text-gray-400');
+
+    // Toolbar container
+    const toolbar = mk('div', 'flex items-center gap-2 mb-4 flex-wrap');
+    toolbar.appendChild(fmtGroup);
+    toolbar.appendChild(copyBtn);
+    toolbar.appendChild(downloadBtn);
+    toolbar.appendChild(sizeEl);
 
     // Content areas
     const treeEl = mk('div');           // JSON interactive tree
     const yamlEl = mk('div');           // YAML viewer (rebuilt on switch)
     yamlEl.style.display = 'none';
 
-    const toolbar = mk('div', 'ev-toolbar');
+    bodyDiv.appendChild(toolbar);
+    bodyDiv.appendChild(treeEl);
+    bodyDiv.appendChild(yamlEl);
+
+    widget.appendChild(header);
+    widget.appendChild(bodyDiv);
 
     function refresh() {
       const ext = format === 'yaml' ? 'yml' : 'json';
-      copyBtn.querySelector('span').textContent     = `Copy ${format.toUpperCase()}`;
-      downloadBtn.querySelector('span').textContent = `Download .${ext}`;
-      jsonBtn.classList.toggle('ev-active', format === 'json');
-      yamlBtn.classList.toggle('ev-active', format === 'yaml');
+      copyBtn.innerHTML = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 256 256"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></svg> Copy ${format.toUpperCase()}`;
+      downloadBtn.innerHTML = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 256 256"><path d="M224,152v56a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V152a8,8,0,0,1,16,0v56H208V152a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,132.69V40a8,8,0,0,0-16,0v92.69L93.66,106.34a8,8,0,0,0-11.32,11.32Z"/></svg> Download .${ext}`;
+
+      jsonBtn.classList.toggle('bg-gray-300', format === 'json');
+      jsonBtn.classList.toggle('dark:bg-gray-600', format === 'json');
+      yamlBtn.classList.toggle('bg-gray-300', format === 'yaml');
+      yamlBtn.classList.toggle('dark:bg-gray-600', format === 'yaml');
 
       if (format === 'json') {
         treeEl.replaceChildren(buildNode(cachedData, null, true, ''));
@@ -443,19 +612,22 @@
         sizeEl.textContent   = `${(toJson(cachedData).length / 1024).toFixed(1)} KB`;
       } else {
         const yaml = toYaml(cachedData);
-        yamlEl.replaceChildren(buildYamlView(yaml));
+        yamlEl.replaceChildren(buildYamlView(yaml, cachedData));
         yamlEl.style.display = '';
         treeEl.style.display = 'none';
         sizeEl.textContent   = `${(yaml.length / 1024).toFixed(1)} KB`;
       }
     }
 
+    fmtGroup.appendChild(jsonBtn);
+    fmtGroup.appendChild(yamlBtn);
+
     jsonBtn.addEventListener('click', () => { format = 'json'; refresh(); });
     yamlBtn.addEventListener('click', () => { format = 'yaml'; refresh(); });
 
     copyBtn.addEventListener('click', async () => {
-      const span = copyBtn.querySelector('span');
-      await copyText(currentText(), span, 'Copied!');
+      const originalText = copyBtn.textContent;
+      await copyText(currentText(), copyBtn, 'Copied!');
     });
 
     downloadBtn.addEventListener('click', () => {
@@ -468,14 +640,6 @@
       a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 5000);
     });
-
-    toolbar.appendChild(fmtGroup);
-    toolbar.appendChild(copyBtn);
-    toolbar.appendChild(downloadBtn);
-    toolbar.appendChild(sizeEl);
-    widget.appendChild(toolbar);
-    widget.appendChild(treeEl);
-    widget.appendChild(yamlEl);
 
     refresh();
 
