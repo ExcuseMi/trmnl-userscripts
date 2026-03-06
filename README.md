@@ -51,16 +51,16 @@ Adds install and fork count badges to every **Recipe Master** plugin on the priv
 ![Badges example](images/badges.png)
 
 **Install:**
-https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/plugin-stats-badges.user.js
+https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/master-recipe-badge.user.js
 
 ---
 
 ## 👤 User Stats Badges
 
-Displays your personal install, fork, and connection count badges next to the “Private Plugin” title. Also powered by the [TRMNL Badges](https://hossain-khan.github.io/trmnl-badges/) service.
+Displays your personal connection count badge next to the “Private Plugin” title. Also powered by the [TRMNL Badges](https://hossain-khan.github.io/trmnl-badges/) service.
 
 **Install:**
-https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/user-stats-badges.user.js
+https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/user-stats-badge.user.js
 
 ---
 
