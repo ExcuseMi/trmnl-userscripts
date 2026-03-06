@@ -2,7 +2,7 @@
 // @name         No Floating Sidebar
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
 // @description  Moves the floating bottom sidebar into the top nav and adds a Private Plugins button
-// @version      1.2.0
+// @version      1.3.1
 // @description  Moves the floating bottom sidebar
 // @author       ExcuseMi
 // @match        https://trmnl.com/*
