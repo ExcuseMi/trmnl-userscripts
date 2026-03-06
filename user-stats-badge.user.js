@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         TRMNL User Stats Badge
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.2.1
+// @version      1.3.1
 // @description  Display user install/fork/connection badges on the right side of the Private Plugin header
 // @author       ExcuseMi
-// @match        https://trmnl.com/plugin_settings?keyname=private_plugin*
+// @match        https://trmnl.com/*
 // @icon         https://trmnl.com/favicon.ico
 // @downloadURL  https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/user-stats-badge.user.js
 // @updateURL    https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/user-stats-badge.user.js
@@ -14,50 +14,113 @@
 (function() {
     'use strict';
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', setup);
-    } else {
-        setup();
+    const LOG_PREFIX = '[TRMNL User Stats Badge]';
+    const log = (...args) => console.log(LOG_PREFIX, ...args);
+    const warn = (...args) => console.warn(LOG_PREFIX, ...args);
+
+    const BADGE_ID = 'trmnl-user-stats-badge';
+    const TARGET_PATH = '/plugin_settings';
+    const TARGET_PARAM = 'keyname=private_plugin';
+
+    function isTargetPage() {
+        return location.pathname === TARGET_PATH && location.search.includes(TARGET_PARAM);
     }
 
-    function setup() {
-        const stickyHeader = document.querySelector('.flex-grow.sticky.top-14');
-        if (!stickyHeader) return;
+    function onNavigate() {
+        if (!isTargetPage()) return;
+        log('On target page. URL:', location.href);
+        waitForHeader();
+    }
 
-        // Find the right-side container that holds the action buttons
-        const rightContainer = stickyHeader.querySelector('.shrink-0.flex.justify-end.items-end.gap-3');
-        if (!rightContainer) return;
+    log('Script loaded. readyState:', document.readyState);
 
-        // Extract user ID from Intercom script
-        const userId = extractUserIdFromIntercom();
-        if (!userId) return;
+    document.addEventListener('turbo:load', () => {
+        log('turbo:load fired.');
+        onNavigate();
+    });
 
-        // Create badge container
-        const badgeContainer = document.createElement('div');
-        badgeContainer.className = 'flex items-center gap-2 mr-2'; // margin-right to separate from buttons
+    document.addEventListener('turbo:frame-load', () => {
+        log('turbo:frame-load fired.');
+        if (!isTargetPage()) return;
+        trySetup();
+    });
 
-        const baseUrl = 'https://trmnl-badges.gohk.xyz/badge';
-        const badges = [
-            { type: 'connections', label: 'Connections' }
-        ];
-
-        badges.forEach(badge => {
-            const img = document.createElement('img');
-            img.src = `${baseUrl}/${badge.type}?userId=${userId}&pretty`;
-            img.alt = badge.label;
-            img.className = 'h-6 inline-block'; // Fixed height class
-            badgeContainer.appendChild(img);
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            log('DOMContentLoaded fired.');
+            onNavigate();
         });
+    } else {
+        onNavigate();
+    }
 
-        // Insert the badge container at the beginning of the right container
+    function waitForHeader() {
+        if (document.getElementById(BADGE_ID)) {
+            log('Badge already present, skipping.');
+            return;
+        }
+
+        if (trySetup()) return;
+
+        const observeTarget = document.querySelector('.flex-grow.sticky.top-14') || document.documentElement;
+        log('Header not ready, observing:', observeTarget.tagName, observeTarget.className.slice(0, 60));
+
+        const observer = new MutationObserver(() => {
+            if (trySetup()) {
+                observer.disconnect();
+            }
+        });
+        observer.observe(observeTarget, { childList: true, subtree: true });
+    }
+
+    function trySetup() {
+        if (document.getElementById(BADGE_ID)) {
+            log('Badge already present, skipping duplicate setup.');
+            return true;
+        }
+
+        const stickyHeader = document.querySelector('.flex-grow.sticky.top-14');
+        if (!stickyHeader) {
+            log('Sticky header not found yet (.flex-grow.sticky.top-14).');
+            return false;
+        }
+
+        const rightContainer = stickyHeader.querySelector('.shrink-0.flex.justify-end.items-end.gap-3');
+        if (!rightContainer) {
+            log('Right container not found yet (.shrink-0.flex.justify-end.items-end.gap-3).');
+            return false;
+        }
+
+        const userId = extractUserIdFromIntercom();
+        if (!userId) {
+            warn('Could not extract user ID from Intercom script.');
+            return false;
+        }
+
+        log('Setting up badge for user ID:', userId);
+
+        const badgeContainer = document.createElement('div');
+        badgeContainer.id = BADGE_ID;
+        badgeContainer.className = 'flex items-center gap-2 mr-2';
+
+        const img = document.createElement('img');
+        img.src = `https://trmnl-badges.gohk.xyz/badge/connections?userId=${userId}&pretty`;
+        img.alt = 'Connections';
+        img.className = 'h-6 inline-block';
+        badgeContainer.appendChild(img);
+
         rightContainer.prepend(badgeContainer);
+        log('Badge inserted successfully.');
+        return true;
     }
 
     function extractUserIdFromIntercom() {
         const intercomScript = document.getElementById('IntercomSettingsScriptTag');
-        if (!intercomScript) return null;
-        const scriptContent = intercomScript.innerHTML;
-        const match = scriptContent.match(/"user_id":\s*(\d+)/);
+        if (!intercomScript) {
+            log('IntercomSettingsScriptTag not found.');
+            return null;
+        }
+        const match = intercomScript.innerHTML.match(/"user_id":\s*(\d+)/);
         return match ? match[1] : null;
     }
 })();

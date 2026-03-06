@@ -44,6 +44,18 @@ Adds category filters (All, Recipe Master, Fork, Install, Private) and a search 
 https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/private-plugin-organiser.user.js
 
 
+## ✏️ Recipe Edit Button
+
+Adds an **Edit** button on recipe pages you own. The button only appears when the logged-in user matches the recipe owner, and links directly to the plugin settings edit page.
+
+**Screenshot:**
+![Recipe Edit](images/recipe-edit.png.png)
+
+**Install:**
+https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/recipe-edit-button.user.js
+
+---
+
 ## 🏷️ Recipe Master Badges
 
 Adds install and fork count badges to every **Recipe Master** plugin on the private plugins page. Badges are clickable and link directly to the plugin’s recipe page. Uses the [TRMNL Badges](https://hossain-khan.github.io/trmnl-badges/) service.

@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TRMNL Private Plugin Categorizer
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.1.0
+// @version      1.1.1
 // @description  Add category filters and search to the private plugin page (with persistence, counters, and proper initial styling)
 // @author       ExcuseMi
 // @match        https://trmnl.com/*
@@ -37,10 +37,18 @@
 
     log('Script loaded. readyState:', document.readyState);
 
-    // Handle Turbo Drive navigation (fires on every Turbo page visit)
+    // turbo:load  — fires after every Turbo page visit (full or cached)
+    // turbo:frame-load — fires when a <turbo-frame> finishes loading its content
+    // Both can be the moment the plugin list first appears in the DOM.
     document.addEventListener('turbo:load', () => {
         log('turbo:load fired.');
         onNavigate();
+    });
+
+    document.addEventListener('turbo:frame-load', () => {
+        log('turbo:frame-load fired.');
+        if (!isTargetPage()) return;
+        trySetup(); // filter bar guard inside trySetup handles duplicates
     });
 
     // Handle regular (non-Turbo) page loads
@@ -53,40 +61,32 @@
         onNavigate();
     }
 
-    // Remove old filter bar when Turbo navigates away, so it doesn't persist in the cache snapshot
-    document.addEventListener('turbo:before-visit', () => {
-        const existing = document.getElementById(FILTER_BAR_ID);
-        if (existing) {
-            log('turbo:before-visit — removing filter bar before navigation.');
-            existing.remove();
-        }
-    });
-
-    // Wait for the plugin list to appear in the DOM (handles dynamic/AJAX loading)
+    // Wait for the plugin list to appear in the DOM.
+    // NOTE: turbo:before-visit is intentionally NOT used to remove the filter bar,
+    // because that would strip it from Turbo's page cache snapshot and force a
+    // re-render on every back-navigation, causing the perceived delay.
     function waitForPluginList() {
-        // If already set up, skip
         if (document.getElementById(FILTER_BAR_ID)) {
             log('Filter bar already present, skipping.');
             return;
         }
 
-        const target = document.querySelector('[data-controller="plugin-settings"]') || document.body;
-        log('Observing for plugin list on:', target);
+        // Happy path: content already in DOM (direct nav or Turbo cache restore).
+        if (trySetup()) return;
+
+        // Fallback: content is inside a <turbo-frame> that hasn't finished loading.
+        // Observe the controller element if present, otherwise the whole document.
+        // turbo:frame-load will also fire and call trySetup(), so the observer
+        // is mainly a safety net.
+        const observeTarget = document.querySelector('[data-controller="plugin-settings"]') || document.documentElement;
+        log('Content not ready, observing:', observeTarget.tagName, observeTarget.id || observeTarget.className.slice(0, 60));
 
         const observer = new MutationObserver(() => {
             if (trySetup()) {
                 observer.disconnect();
-                log('Observer disconnected after successful setup.');
             }
         });
-
-        observer.observe(target, { childList: true, subtree: true });
-
-        // Also try immediately in case it's already there
-        if (trySetup()) {
-            observer.disconnect();
-            log('Observer disconnected (immediate setup succeeded).');
-        }
+        observer.observe(observeTarget, { childList: true, subtree: true });
     }
 
     function trySetup() {
