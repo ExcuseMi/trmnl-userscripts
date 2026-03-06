@@ -15,6 +15,7 @@ Adds a toggle button to the markup editor toolbar that keeps the **preview panel
 ![sticky-preview.png](images/sticky-preview.png)
 
 **Icon:**
+
 ![sticky-preview-icon.png](images/sticky-preview-icon.png)
 
 **Install:**
