@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         TRMNL No Floating Sidebar
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.2.0
+// @version      1.2.1
 // @description  Moves the floating bottom sidebar
 // @author       ExcuseMi
 // @match        https://trmnl.com/*
+// @icon         https://trmnl.com/favicon.ico
 // @downloadURL  https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/no-floating-sidebar.user.js
 // @updateURL    https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/no-floating-sidebar.user.js
 // @grant        none
