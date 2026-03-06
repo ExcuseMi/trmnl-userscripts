@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         No Floating Sidebar
+// @name         TRMNL No Floating Sidebar
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
 // @version      1.2.0
-// @description  Moves the floating bottom sidebar into the top navigation bar – works reliably with Turbo and class variations.
+// @description  Moves the floating bottom sidebar
 // @author       ExcuseMi
 // @match        https://trmnl.com/*
 // @downloadURL  https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/no-floating-sidebar.user.js
