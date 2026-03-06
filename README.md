@@ -62,6 +62,7 @@ Adds a dropdown to the **Shared markup editor** that allows quick switching betw
 * Quadrant
 
 The script automatically fetches the corresponding view templates from the plugin archive and injects them into preview requests.
+
 **Screenshots:**
 
 ![shared-view.png](images/shared-view.png)
@@ -99,6 +100,8 @@ https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/recipe-edit-bu
 ## 🏷️ Recipe Master Badge
 
 Adds connection count badges to every **Recipe Master** plugin on the private plugins page. Badges are clickable and link directly to the plugin’s recipe page. Uses the [TRMNL Badges](https://hossain-khan.github.io/trmnl-badges/) service.
+
+**Screenshot:**
 
 ![Badges example](images/badges.png)
 
