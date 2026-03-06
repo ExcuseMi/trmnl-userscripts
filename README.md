@@ -1,12 +1,27 @@
 # TRMNL Userscripts
 
-A small collection of userscripts that enhance the editing experience for the [TRMNL](https://trmnl.com) plugin editor.
+A small collection of users0cripts that enhance the editing experience for the [TRMNL](https://trmnl.com) plugin editor.
 
 These scripts improve usability, simplify navigation, and add helpful tools when working with plugin markup and layouts.
 
 ---
 
-# Scripts
+## 📌 Sticky Preview
+
+Adds a toggle button to the markup editor toolbar that keeps the **preview panel sticky** while scrolling through a long editor. The preview stays pinned just below the page header, so you can always see the result while editing code at the bottom of the file. State is persisted across page loads.
+
+**Screenshot:**
+
+![sticky-preview.png](images/sticky-preview.png)
+
+**Icon:**
+
+![sticky-preview.png](images/sticky-preview.png)
+
+**Install:**
+https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/sticky-preview.user.js
+
+---
 
 ## 🚫 No Floating Sidebar
 
@@ -37,6 +52,7 @@ https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/shared-view-se
 Adds category filters (All, Recipe Master, Fork, Install, Private) and a search bar to the private plugins page. Remembers your last selection and resets if no plugins match, ensuring you always see relevant content.
 
 **Screenshot:**
+
 ![private-plugin-organiser](images/private-plugin-organiser.png)
 
 
@@ -49,6 +65,7 @@ https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/private-plugin
 Adds an **Edit** button on recipe pages you own. The button only appears when the logged-in user matches the recipe owner, and links directly to the plugin settings edit page.
 
 **Screenshot:**
+
 ![Recipe Edit](images/recipe-edit.png)
 
 **Install:**

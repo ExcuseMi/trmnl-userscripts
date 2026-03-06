@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TRMNL Shared View Selector
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.1.2
+// @version      1.1.3
 // @description  Adds a view layout combobox (shared page only). Fetches view templates from plugin archive and injects them into preview requests.
 // @author       ExcuseMi
 // @match        https://trmnl.com/plugin_settings/*/markup/edit*
@@ -297,7 +297,7 @@
     clearBtn.title = 'Clear cached view templates';
 
     clearBtn.className =
-      'inline-flex items-center justify-center ml-1 w-8 h-8 text-sm rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition';
+      'inline-flex items-center justify-center ml-1 w-8 h-8 text-sm rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 transition';
 
     clearBtn.innerHTML = `
 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
