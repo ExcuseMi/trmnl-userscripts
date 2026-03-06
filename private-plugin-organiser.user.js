@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TRMNL Private Plugin Categorizer
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.1.1
+// @version      1.1.2
 // @description  Add category filters and search to the private plugin page (with persistence, counters, and proper initial styling)
 // @author       ExcuseMi
 // @match        https://trmnl.com/*
@@ -233,34 +233,56 @@
                 show ? visible++ : hidden++;
             });
             log(`applyFilters: ${visible} visible, ${hidden} hidden (category="${activeCategory}", search="${searchTerm}")`);
+            return visible;
         }
 
-        function anyVisible() {
-            return plugins.some(p => p.row.style.display !== 'none');
+        function switchToAllIfNoResults() {
+            if (activeCategory !== 'all') {
+                const totalInAllWithCurrentSearch = plugins.filter(p =>
+                    p.title.toLowerCase().includes(searchTerm.toLowerCase())
+                ).length;
+
+                if (totalInAllWithCurrentSearch > 0) {
+                    log(`No results in "${activeCategory}" but ${totalInAllWithCurrentSearch} results in "All" — switching to All category`);
+
+                    activeCategory = 'all';
+                    saveFilters(activeCategory, searchTerm);
+
+                    // Update button active states
+                    categoryButtons.forEach(b => {
+                        b.className = getButtonClass(b.dataset.category, b.dataset.category === activeCategory);
+                    });
+
+                    applyFilters();
+                    return true;
+                }
+            }
+            return false;
         }
 
-        function resetFilters() {
-            warn('No plugins visible with stored filters — resetting to defaults.');
-            activeCategory = 'all';
-            searchTerm = '';
-            searchInput.value = '';
-            categoryButtons.forEach(btn => {
-                btn.className = getButtonClass(btn.dataset.category, btn.dataset.category === 'all');
-            });
-            updateCounts();
-            saveFilters('all', '');
-            applyFilters();
+        function checkAndHandleNoResults(visibleCount) {
+            if (visibleCount === 0) {
+                // Try switching to All category first
+                if (!switchToAllIfNoResults()) {
+                    // If still no results in All (no plugins match search at all), do a full reset
+                    warn('No plugins match search at all — resetting to defaults.');
+                    activeCategory = 'all';
+                    searchTerm = '';
+                    searchInput.value = '';
+                    categoryButtons.forEach(btn => {
+                        btn.className = getButtonClass(btn.dataset.category, btn.dataset.category === 'all');
+                    });
+                    updateCounts();
+                    saveFilters('all', '');
+                    applyFilters();
+                }
+            }
         }
 
         // Initial state
         updateCounts();
-        applyFilters();
-
-        if (!anyVisible()) {
-            resetFilters();
-        } else {
-            saveFilters(activeCategory, searchTerm);
-        }
+        const initialVisible = applyFilters();
+        checkAndHandleNoResults(initialVisible);
 
         // Event handlers
         searchInput.addEventListener('input', e => {
@@ -268,7 +290,8 @@
             log(`Search changed: "${searchTerm}"`);
             saveFilters(activeCategory, searchTerm);
             updateCounts();
-            applyFilters();
+            const visible = applyFilters();
+            checkAndHandleNoResults(visible);
         });
 
         categoryButtons.forEach(btn => {
@@ -280,7 +303,8 @@
                 categoryButtons.forEach(b => {
                     b.className = getButtonClass(b.dataset.category, b.dataset.category === activeCategory);
                 });
-                applyFilters();
+                const visible = applyFilters();
+                checkAndHandleNoResults(visible);
             });
         });
 
