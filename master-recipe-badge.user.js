@@ -6,8 +6,8 @@
 // @author       ExcuseMi
 // @match        https://trmnl.com/plugin_settings*
 // @icon         https://trmnl.com/favicon.ico
-// @downloadURL  https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/master-recipe-badges.user.js
-// @updateURL    https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/master-recipe-badges.user.js
+// @downloadURL  https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/master-recipe-badge.user.js
+// @updateURL    https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/master-recipe-badge.user.js
 // @grant        none
 // ==/UserScript==
 
