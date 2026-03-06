@@ -49,7 +49,7 @@ https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/private-plugin
 Adds an **Edit** button on recipe pages you own. The button only appears when the logged-in user matches the recipe owner, and links directly to the plugin settings edit page.
 
 **Screenshot:**
-![Recipe Edit](images/recipe-edit.png.png)
+![Recipe Edit](images/recipe-edit.png)
 
 **Install:**
 https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/recipe-edit-button.user.js
