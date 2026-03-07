@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         TRMNL Better Variables
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.1.1
-// @description  Replaces the variables accordion with an interactive JSON tree viewer + YAML export with copy features.
+// @version      1.1.2
+// @description  Adds an interactive JSON tree viewer + YAML export with copy features inside the existing variables accordion.
 // @author       ExcuseMi
 // @match        https://trmnl.com/plugin_settings/*/markup/edit*
 // @icon         https://trmnl.com/favicon.ico
@@ -66,7 +66,7 @@
       if (s === '' || /[:#\[\]{},&*?|<>=!%@`\n\r]/.test(s) ||
           /^(true|false|null|yes|no|on|off)$/i.test(s) ||
           /^\s|\s$/.test(s) || /^\d/.test(s)) {
-        return '"' + s.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n') + '"';
+        return '"' + s.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\r/g, '\\r').replace(/\n/g, '\\n') + '"';
       }
       return s;
     }
@@ -207,8 +207,6 @@
 
     const wrap   = mk('div', 'jv-node');
     const header = mk('div', 'jv-header');
-    const arrow  = mk('span', 'jv-arrow', '▾');
-    header.appendChild(arrow);
     if (key !== null) { header.appendChild(keyNode(key, path)); header.appendChild(mk('span', 'jv-p', ': ')); }
     header.appendChild(mk('span', 'jv-p', open));
 
@@ -241,7 +239,7 @@
     let collapsed = false;
     header.addEventListener('click', () => {
       collapsed = !collapsed;
-      arrow.textContent      = collapsed ? '▸' : '▾';
+      header.classList.toggle('jv-collapsed', collapsed);
       body.style.display     = collapsed ? 'none' : '';
       closeRow.style.display = collapsed ? 'none' : '';
       preview.style.display  = collapsed ? '' : 'none';
@@ -426,6 +424,29 @@
       container.appendChild(row);
     });
 
+    // Post-process: tag each row with its depth and wire up collapse
+    const allRows = Array.from(container.children);
+    allRows.forEach((row, i) => {
+      row.dataset.yvDepth = lines[i].match(/^(\s*)/)[1].length;
+    });
+    allRows.forEach((row, i) => {
+      const depth = +row.dataset.yvDepth;
+      const nextDepth = +(allRows[i + 1]?.dataset.yvDepth ?? -1);
+      if (nextDepth > depth) {
+        const children = [];
+        for (let j = i + 1; j < allRows.length; j++) {
+          if (+allRows[j].dataset.yvDepth <= depth) break;
+          children.push(allRows[j]);
+        }
+        row.classList.add('yv-parent');
+        row.addEventListener('click', e => {
+          if (e.target.classList.contains('jv-copy')) return;
+          const col = row.classList.toggle('yv-collapsed');
+          children.forEach(c => { c.style.display = col ? 'none' : ''; });
+        });
+      }
+    });
+
     return container;
   }
 
@@ -439,15 +460,19 @@
     const s = mk('style');
     s.id = STYLE_ID;
     s.textContent = `
+      /* Widget root — hard cap matching TRMNL's own max-w-[80vw] on the variable list */
+      ${W} { overflow:hidden; word-break:break-all; overflow-wrap:anywhere; }
+
       /* JSON tree */
       ${W} .jv-body    { padding-left:1.25rem; }
-      ${W} .jv-row     { display:flex; flex-wrap:wrap; align-items:baseline; gap:0.15rem; }
-      ${W} .jv-header  { display:flex; align-items:baseline; gap:0.15rem; cursor:pointer; border-radius:3px; padding:0 2px; position:relative; }
+      ${W} .jv-row     { display:block; word-break:break-all; overflow-wrap:anywhere; line-height:1.6; padding-left:0.9rem; }
+      ${W} .jv-header  { display:flex; align-items:baseline; gap:0.15rem; cursor:pointer; border-radius:3px; padding:1px 2px 1px 0.9rem; position:relative; }
       ${W} .jv-header:hover { background:rgba(0,0,0,.04); }
       .dark ${W} .jv-header:hover { background:rgba(255,255,255,.05); }
-      ${W} .jv-arrow   { font-size:9px; color:#9ca3af; user-select:none; width:.85rem; flex-shrink:0; }
+      ${W} .jv-header::before { content:'▾'; position:absolute; left:2px; font-size:9px; color:#9ca3af; user-select:none; line-height:1.6; }
+      ${W} .jv-header.jv-collapsed::before { content:'▸'; }
       ${W} .jv-key     { color:#2563eb; }
-      ${W} .jv-str     { color:#16a34a; word-break:break-all; }
+      ${W} .jv-str     { color:#16a34a; }
       ${W} .jv-num     { color:#dc2626; }
       ${W} .jv-bool    { color:#9333ea; }
       ${W} .jv-null    { color:#9ca3af; }
@@ -461,7 +486,7 @@
       }
       ${W} .jv-header:hover .jv-obj-copy { display:inline; }
       ${W} .jv-obj-copy:hover { background:rgba(0,0,0,.08); color:#374151; }
-      .dark ${W} .jv-arrow   { color:#64748b; }
+      .dark ${W} .jv-header::before { color:#64748b; }
       .dark ${W} .jv-key     { color:#7dd3fc; }
       .dark ${W} .jv-str     { color:#86efac; }
       .dark ${W} .jv-num     { color:#fca5a5; }
@@ -477,14 +502,15 @@
         line-height: 1.7;
       }
       ${W} .yv-row {
+        display: block;
         white-space: pre-wrap;
         word-break: break-all;
         overflow-wrap: anywhere;
-        display: flex;
-        flex-wrap: wrap;
-        align-items: baseline;
-        gap: 0.15rem;
+        line-height: 1.7;
       }
+      ${W} .yv-parent { cursor:pointer; border-radius:3px; }
+      ${W} .yv-parent:hover { background:rgba(0,0,0,.04); }
+      .dark ${W} .yv-parent:hover { background:rgba(255,255,255,.05); }
       ${W} .yv-dash {
         color: #9ca3af;
         margin-right: 0.15rem;
@@ -518,47 +544,23 @@
     const container = body.querySelector('[data-controller="variable-fold"]');
     if (!container) return false;
 
+    // Prevent the container from growing wider than its natural layout width
+    container.style.overflow = 'hidden';
+
     const data = extractVariables();
     if (!Object.keys(data).length) return false;
     cachedData = data;
 
-    // Create widget with the same classes as the JS Logs component
+    // Inject directly into the existing accordion — no custom accordion wrapper
     const widget = mk('div');
     widget.id = WIDGET_ID;
-    widget.className = 'border border-gray-200 rounded-lg dark:border-gray-700'; // Main container
+    widget.style.cssText = 'max-width:80vw; overflow:hidden;';
 
-    // Create header matching the JS Logs button
-    const header = mk('h2');
-    const headerButton = mk('button');
-    headerButton.type = 'button';
-    headerButton.className = 'flex items-center justify-between w-full py-2 px-4 font-medium rtl:text-right border [&[aria-expanded=true]]:!border-b-0 border-gray-200 rounded-lg [&[aria-expanded=true]]:rounded-b-none focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-800 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-800 gap-3 bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white';
-    headerButton.setAttribute('aria-expanded', 'true');
-
-    // Header content with icon
-    const headerSpan = mk('span', 'flex items-center gap-2');
-    headerSpan.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" class="size-5" width="32" height="32" fill="currentColor" viewBox="0 0 256 256">
-            <path d="M128,128a8,8,0,0,1-3,6.25l-40,32a8,8,0,1,1-10-12.5L107.19,128,75,102.25a8,8,0,1,1,10-12.5l40,32A8,8,0,0,1,128,128Zm48,24H136a8,8,0,0,0,0,16h40a8,8,0,0,0,0-16Zm56-96V200a16,16,0,0,1-16,16H40a16,16,0,0,1-16-16V56A16,16,0,0,1,40,40H216A16,16,0,0,1,232,56ZM216,200V56H40V200H216Z"></path>
-        </svg>
-        Variables
-    `;
-
-    // Arrow icon
-    const arrowSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    arrowSvg.setAttribute('class', 'w-3 h-3 shrink-0');
-    arrowSvg.setAttribute('viewBox', '0 0 10 6');
-    arrowSvg.innerHTML = '<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5 5 1 1 5"></path>';
-
-    headerButton.appendChild(headerSpan);
-    headerButton.appendChild(arrowSvg);
-    header.appendChild(headerButton);
-
-    // Create body with same classes as JS Logs body
     const bodyDiv = mk('div');
-    bodyDiv.className = 'p-4 border rounded-b-lg border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-gray-700 dark:text-white text-sm font-mono';
+    bodyDiv.className = 'text-gray-700 dark:text-white text-sm font-mono';
 
     // Format toggle (segmented control)
-    const fmtGroup  = mk('div', 'inline-flex rounded-md shadow-sm mb-4');
+    const fmtGroup  = mk('div', 'flex rounded-md shadow-sm');
     const jsonBtn   = mk('button', 'px-4 py-2 text-sm font-medium border border-gray-200 rounded-l-lg bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 focus:z-10 focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-600', 'JSON');
     const yamlBtn   = mk('button', 'px-4 py-2 text-sm font-medium border border-gray-200 rounded-r-lg bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 focus:z-10 focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-600', 'YAML');
     jsonBtn.type    = 'button';
@@ -576,29 +578,55 @@
 
     const sizeEl = mk('span', 'ml-auto text-xs text-gray-500 dark:text-gray-400');
 
+    const btnCls = 'px-3 py-2 text-sm font-medium border border-gray-200 rounded-lg bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 focus:z-10 focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-600';
+    const collapseAllBtn = mk('button', btnCls, 'Collapse');
+    collapseAllBtn.type = 'button';
+    collapseAllBtn.title = 'Collapse all';
+    const expandAllBtn = mk('button', btnCls, 'Expand');
+    expandAllBtn.type = 'button';
+    expandAllBtn.title = 'Expand all';
+
     // Toolbar container
     const toolbar = mk('div', 'flex items-center gap-2 mb-4 flex-wrap');
     toolbar.appendChild(fmtGroup);
     toolbar.appendChild(copyBtn);
     toolbar.appendChild(downloadBtn);
+    toolbar.appendChild(collapseAllBtn);
+    toolbar.appendChild(expandAllBtn);
     toolbar.appendChild(sizeEl);
 
     // Content areas
     const treeEl = mk('div');           // JSON interactive tree
     const yamlEl = mk('div');           // YAML viewer (rebuilt on switch)
     yamlEl.style.display = 'none';
-
     bodyDiv.appendChild(toolbar);
     bodyDiv.appendChild(treeEl);
     bodyDiv.appendChild(yamlEl);
 
-    widget.appendChild(header);
     widget.appendChild(bodyDiv);
 
+    collapseAllBtn.addEventListener('click', () => {
+      if (format === 'json') {
+        treeEl.querySelectorAll('.jv-header:not(.jv-collapsed)').forEach(h => h.click());
+      } else {
+        yamlEl.querySelectorAll('.yv-parent').forEach(h => h.classList.add('yv-collapsed'));
+        yamlEl.querySelectorAll('[data-yv-depth]').forEach(r => {
+          if (+r.dataset.yvDepth > 0) r.style.display = 'none';
+        });
+      }
+    });
+    expandAllBtn.addEventListener('click', () => {
+      if (format === 'json') {
+        treeEl.querySelectorAll('.jv-header.jv-collapsed').forEach(h => h.click());
+      } else {
+        yamlEl.querySelectorAll('.yv-collapsed').forEach(h => h.classList.remove('yv-collapsed'));
+        yamlEl.querySelectorAll('[data-yv-depth]').forEach(r => { r.style.display = ''; });
+      }
+    });
+
     function refresh() {
-      const ext = format === 'yaml' ? 'yml' : 'json';
-      copyBtn.innerHTML = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 256 256"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></svg> Copy ${format.toUpperCase()}`;
-      downloadBtn.innerHTML = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 256 256"><path d="M224,152v56a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V152a8,8,0,0,1,16,0v56H208V152a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,132.69V40a8,8,0,0,0-16,0v92.69L93.66,106.34a8,8,0,0,0-11.32,11.32Z"/></svg> Download .${ext}`;
+      copyBtn.innerHTML = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 256 256"><path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"/></svg> Copy`;
+      downloadBtn.innerHTML = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 256 256"><path d="M224,152v56a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V152a8,8,0,0,1,16,0v56H208V152a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,132.69V40a8,8,0,0,0-16,0v92.69L93.66,106.34a8,8,0,0,0-11.32,11.32Z"/></svg> Download`;
 
       jsonBtn.classList.toggle('bg-gray-300', format === 'json');
       jsonBtn.classList.toggle('dark:bg-gray-600', format === 'json');
@@ -633,9 +661,10 @@
     downloadBtn.addEventListener('click', () => {
       const pluginId = window.location.pathname.match(/\/plugin_settings\/(\d+)\//)?.[1] ?? 'plugin';
       const isYaml   = format === 'yaml';
+      const ext = isYaml ? 'yml' : 'json';
       const a = Object.assign(mk('a'), {
         href:     URL.createObjectURL(new Blob([currentText()], { type: isYaml ? 'text/yaml' : 'application/json' })),
-        download: `trmnl-${pluginId}-variables.${isYaml ? 'yml' : 'json'}`,
+        download: `trmnl-${pluginId}-variables.${ext}`,
       });
       a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 5000);
@@ -643,8 +672,11 @@
 
     refresh();
 
-    container.style.display = 'none';
-    container.insertAdjacentElement('afterend', widget);
+    // Keep the container visible (it provides the dark bg + border styling),
+    // but hide the inner variable card list and replace with our widget
+    const innerList = container.querySelector('.space-y-3');
+    if (innerList) innerList.style.display = 'none';
+    container.appendChild(widget);
     return true;
   }
 
@@ -662,8 +694,9 @@
 
   document.addEventListener('turbo:load', () => {
     document.getElementById(WIDGET_ID)?.remove();
-    document.querySelectorAll('[data-controller="variable-fold"]')
-      .forEach(c => { c.style.display = ''; });
+    document.querySelectorAll('[data-controller="variable-fold"] .space-y-3')
+      .forEach(el => { el.style.display = ''; });
+    document.querySelector('[data-controller="variable-fold"]')?.style.setProperty('overflow', '');
     cachedData = null;
     format     = 'json';
     injectUI();

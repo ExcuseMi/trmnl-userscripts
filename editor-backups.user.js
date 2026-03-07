@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TRMNL Editor Backups
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.3.1
+// @version      1.3.2
 // @description  Automatically snapshots the plugin archive before and after every save. View per-file diffs and restore any backup.
 // @author       ExcuseMi
 // @match        https://trmnl.com/plugin_settings/*
@@ -234,8 +234,8 @@
   // ---------------------------------------------------------------------------
 
   function diffLines(a, b) {
-    const aL = a ? a.split('\n') : [];
-    const bL = b ? b.split('\n') : [];
+    const aL = a ? a.replace(/\r/g, '').split('\n') : [];
+    const bL = b ? b.replace(/\r/g, '').split('\n') : [];
     const m  = Math.min(aL.length, 800);
     const n  = Math.min(bL.length, 800);
 
@@ -250,8 +250,9 @@
     let i = 0, j = 0;
     while (i < m || j < n) {
       if (i < m && j < n && aL[i] === bL[j]) { out.push({ t: 'eq',  l: aL[i] }); i++; j++; }
-      else if (j < n && (i >= m || dp[i + 1][j] >= dp[i][j + 1])) { out.push({ t: 'add', l: bL[j] }); j++; }
-      else { out.push({ t: 'del', l: aL[i] }); i++; }
+      // Prefer del before add (conventional order, enables intra-line pairing)
+      else if (i < m && (j >= n || dp[i + 1][j] >= dp[i][j + 1])) { out.push({ t: 'del', l: aL[i] }); i++; }
+      else { out.push({ t: 'add', l: bL[j] }); j++; }
     }
     return out;
   }
@@ -273,14 +274,52 @@
 
     const pre = mk('pre', 'bk-diff');
     let lastShown = -1;
+    const rendered = new Uint8Array(diff.length);
+
     diff.forEach((d, idx) => {
-      if (!show[idx]) return;
+      if (!show[idx] || rendered[idx]) return;
       if (lastShown !== -1 && idx > lastShown + 1) pre.appendChild(mk('div', 'bk-diff-skip', '···'));
-      const row = mk('div', `bk-diff-${d.t}`);
-      row.textContent = (d.t === 'add' ? '+ ' : d.t === 'del' ? '− ' : '  ') + d.l;
-      pre.appendChild(row);
-      lastShown = idx;
+
+      if (d.t === 'del') {
+        // Collect the full consecutive run of dels then adds — pair them in order
+        let k = idx;
+        const dels = [], adds = [];
+        while (k < diff.length && diff[k].t === 'del' && !rendered[k]) dels.push(k++);
+        while (k < diff.length && diff[k].t === 'add' && !rendered[k]) adds.push(k++);
+        dels.forEach(i => rendered[i] = 1);
+        adds.forEach(i => rendered[i] = 1);
+
+        const pairs = Math.min(dels.length, adds.length);
+        for (let p = 0; p < pairs; p++) {
+          const ol = diff[dels[p]].l, nl = diff[adds[p]].l;
+          const dr = mk('div', 'bk-diff-del'); appendIntraLine(dr, '− ', ol, nl, 'bk-hl-del'); pre.appendChild(dr);
+          const ar = mk('div', 'bk-diff-add'); appendIntraLine(ar, '+ ', nl, ol, 'bk-hl-add'); pre.appendChild(ar);
+        }
+        for (let p = pairs; p < dels.length; p++) {
+          const row = mk('div', 'bk-diff-del'); row.textContent = '− ' + diff[dels[p]].l; pre.appendChild(row);
+        }
+        for (let p = pairs; p < adds.length; p++) {
+          const row = mk('div', 'bk-diff-add'); row.textContent = '+ ' + diff[adds[p]].l; pre.appendChild(row);
+        }
+        lastShown = k - 1;
+      } else {
+        const row = mk('div', `bk-diff-${d.t}`);
+        row.textContent = (d.t === 'add' ? '+ ' : '  ') + d.l;
+        pre.appendChild(row);
+        lastShown = idx;
+      }
     });
+
+    function appendIntraLine(row, marker, line, other, hlCls) {
+      let p = 0;
+      while (p < line.length && p < other.length && line[p] === other[p]) p++;
+      let lEnd = line.length, oEnd = other.length;
+      while (lEnd > p && oEnd > p && line[lEnd - 1] === other[oEnd - 1]) { lEnd--; oEnd--; }
+
+      row.appendChild(document.createTextNode(marker + line.slice(0, p)));
+      if (lEnd > p) row.appendChild(mk('mark', hlCls, line.slice(p, lEnd)));
+      if (lEnd < line.length) row.appendChild(document.createTextNode(line.slice(lEnd)));
+    }
 
     // Start expanded so diffs are immediately readable
     let expanded = true;
@@ -563,35 +602,47 @@
     input.addEventListener('change', async () => {
       const file = input.files[0];
       if (!file) return;
+      log('Import: reading file:', file.name, 'size:', file.size, 'bytes');
       try {
         const arrayBuffer = await file.arrayBuffer();
+        log('Import: parsing ZIP…');
         const zip = await JSZip.loadAsync(arrayBuffer);
+
+        const zipEntries = Object.entries(zip.files).filter(([, e]) => !e.dir);
+        log('Import: ZIP entries found:', zipEntries.map(([n]) => n));
+
         const files = {};
         await Promise.all(
-          Object.entries(zip.files)
-            .filter(([, e]) => !e.dir)
-            .map(async ([name, e]) => {
-              // Strip directory prefix (e.g. "plugin_256335/shared.liquid" → "shared.liquid")
-              const basename = name.split('/').pop();
-              if (basename) files[basename] = await e.async('text');
-            })
+          zipEntries.map(async ([name, e]) => {
+            // Strip directory prefix (e.g. "plugin_256335/shared.liquid" → "shared.liquid")
+            const basename = name.split('/').pop();
+            if (basename) {
+              files[basename] = await e.async('text');
+              log(`Import: extracted "${basename}" — ${files[basename].length} chars`);
+            }
+          })
         );
+
         if (!Object.keys(files).length) { alert('ZIP contains no files.'); return; }
+        log('Import: all files extracted:', Object.keys(files));
 
         // Check settings.yml id against current plugin
         const settingsYml = files['settings.yml'] || '';
         const idMatch = settingsYml.match(/^id:\s*(\d+)/m);
         if (idMatch && idMatch[1] !== pluginId) {
           const otherId = idMatch[1];
+          const nameMatch = settingsYml.match(/^name:\s*(.+)/m);
+          const nameNote = nameMatch ? ` ("${nameMatch[1].trim()}")` : '';
           const confirmed = confirm(
-            `This ZIP belongs to plugin ${otherId}, but you're on plugin ${pluginId}.\n\n` +
+            `This ZIP belongs to plugin ${otherId}${nameNote}, but you're on plugin ${pluginId}.\n\n` +
             `Import anyway? The id in settings.yml will be updated to ${pluginId}.`
           );
           if (!confirmed) return;
           files['settings.yml'] = settingsYml.replace(/^id:\s*\d+/m, `id: ${pluginId}`);
-          log(`settings.yml id updated from ${otherId} to ${pluginId}`);
+          log(`Import: settings.yml id updated from ${otherId} to ${pluginId}`);
         }
 
+        // Save to backup list
         const { maxBackups } = getConfig();
         const entry = {
           id: Date.now(), timestamp: Date.now(),
@@ -603,13 +654,43 @@
         saveBackups(pluginId, backups);
         refreshButtonCount();
 
-        // Prepend the new entry to the live list
         const emptyMsg = listEl.querySelector('p');
         if (emptyMsg) emptyMsg.remove();
         listEl.prepend(buildEntryEl(entry, pluginId));
-        log('Imported ZIP:', file.name, Object.keys(files));
+        log('Import: saved to backup list:', file.name, Object.keys(files));
+
+        // Upload to TRMNL
+        const apiKey = localStorage.getItem(API_KEY_KEY) || '';
+        if (!apiKey) {
+          alert('ZIP saved to backup list.\n\nSet your API key in the panel to upload it to TRMNL.');
+          return;
+        }
+
+        log('Import: building ZIP for upload…');
+        const blob = await buildZip(files);
+        log('Import: ZIP blob size:', blob.size, 'bytes');
+        const fd = new FormData();
+        fd.append('file', blob, 'archive.zip');
+
+        log(`Import: uploading to /api/plugin_settings/${pluginId}/archive…`);
+        const res = await fetch(`https://trmnl.com/api/plugin_settings/${pluginId}/archive`, {
+          method: 'POST', headers: { Authorization: `Bearer ${apiKey}` }, body: fd,
+        });
+        log('Import: upload response status:', res.status);
+
+        if (!res.ok) {
+          const body = await res.text().catch(() => '');
+          warn('Import: upload failed body:', body);
+          throw new Error(`HTTP ${res.status}${body ? ' — ' + body.slice(0, 300) : ''}`);
+        }
+
+        log('Import: upload successful, redirecting…');
+        setTimeout(() => {
+          if (window.Turbo?.cache) window.Turbo.cache.clear();
+          window.location.href = `https://trmnl.com/plugin_settings/${pluginId}/edit`;
+        }, 800);
       } catch (e) {
-        warn('ZIP import failed:', e.message);
+        warn('Import: failed:', e.message);
         alert(`Import failed: ${e.message}`);
       }
     });
@@ -818,12 +899,12 @@
       'flex items-center justify-between px-5 py-2 text-xs font-semibold uppercase ' +
       'tracking-wider text-gray-500 dark:text-gray-400 flex-shrink-0'
     );
-//    const importB = mk('button',
-//      'text-xs text-primary-500 dark:text-primary-400 hover:underline bg-transparent border-0 cursor-pointer',
-//      '↑ Import ZIP'
-//    );
-//    importB.type = 'button';
-//    importB.addEventListener('click', () => importFromZip(pluginId, listEl));
+    const importB = mk('button',
+      'text-xs text-primary-500 dark:text-primary-400 hover:underline bg-transparent border-0 cursor-pointer',
+      '↑ Import ZIP'
+    );
+    importB.type = 'button';
+    importB.addEventListener('click', () => importFromZip(pluginId, listEl));
 
     const clearB = mk('button',
       'text-xs text-red-500 dark:text-red-400 hover:underline bg-transparent border-0 cursor-pointer',
@@ -841,7 +922,7 @@
     });
 
     const listActions = mk('div', 'flex items-center gap-3');
-    //listActions.append(importB, clearB);
+    listActions.append(importB, clearB);
     listHdr.append(mk('span', '', `Plugin ${pluginId}`), listActions);
     panel.appendChild(listHdr);
 
@@ -909,7 +990,7 @@
     const count = getBackups(pluginId).length;
 
     const btn = mk('button',
-      'ml-3 inline-flex items-center gap-1.5 px-2.5 py-1 flex-shrink-0 ' +
+      'inline-flex items-center gap-1.5 px-2.5 py-1 flex-shrink-0 ' +
       'text-xs font-medium rounded-full border cursor-pointer transition-colors ' +
       'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 ' +
       'text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 ' +
@@ -924,7 +1005,12 @@
       `<path d="M136,80v43.47l36.12,21.67a8,8,0,0,1-8.24,13.72l-40-24A8,8,0,0,1,120,128V80a8,8,0,0,1,16,0Zm-8-48A95.44,95.44,0,0,0,60.08,60.15L52,52a8,8,0,0,0-13.66,5.61l-.77,42.46a8,8,0,0,0,8,8.14l42.47-.77A8,8,0,0,0,93.61,94.1L84.4,84.87a79.56,79.56,0,1,1-1.32,95.46,8,8,0,1,0-13,9.26A96,96,0,1,0,128,32Z"/>` +
       `</svg><span data-bk-count>${count}</span>`;
     btn.addEventListener('click', openPanel);
-    headerFlex.appendChild(btn);
+
+    // Place button inline with the h2 title
+    const h2Row = mk('div', 'flex items-center gap-2');
+    h2.parentNode.insertBefore(h2Row, h2);
+    h2Row.appendChild(h2);
+    h2Row.appendChild(btn);
     log('Button injected for plugin', pluginId);
     return true;
   }
@@ -942,13 +1028,15 @@
 
     const isAlreadySaved = localStorage.getItem(API_KEY_KEY) === apiValue;
     const baseBtnCls =
-      'cursor-pointer font-medium rounded-lg text-sm px-3 py-2 inline-flex items-center ' +
-      'transition duration-150 justify-center shrink-0 gap-1.5 whitespace-nowrap focus:outline-none ';
+      'inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-full border ' +
+      'cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 mt-3 ';
+    const clsDefault = 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 ' +
+      'text-gray-700 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700';
+    const clsSaved   = 'text-primary-500 bg-primary-100 dark:bg-primary-900 ' +
+      'border-primary-300 dark:border-primary-700';
 
     const btn = mk('button',
-      baseBtnCls + (isAlreadySaved
-        ? 'bk-chip-set border'
-        : 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700'),
+      baseBtnCls + (isAlreadySaved ? clsSaved : clsDefault),
       isAlreadySaved ? '✓ Saved in Backups' : '↓ Use in Backup Script'
     );
     btn.id   = ACCT_BTN_ID;
@@ -957,13 +1045,20 @@
     btn.addEventListener('click', () => {
       localStorage.setItem(API_KEY_KEY, apiValue);
       btn.textContent = '✓ Saved in Backups';
-      btn.className   = baseBtnCls + 'bk-chip-set border';
+      btn.className   = baseBtnCls + clsSaved;
     });
 
-    // Insert into the flex row alongside the "Hergenereer" form
+    // Insert below the API key section, after the docs paragraph
     const flexRow = apiInput.closest('.flex.items-center');
-    if (flexRow) { flexRow.appendChild(btn); return true; }
-    return false;
+    if (!flexRow) return false;
+    const container = flexRow.closest('.p-6') || flexRow.parentElement;
+    const docsP = container.querySelector('a[href*="help.trmnl.com"]')?.closest('p');
+    if (docsP) {
+      docsP.insertAdjacentElement('afterend', btn);
+    } else {
+      container.appendChild(btn);
+    }
+    return true;
   }
 
   // ---------------------------------------------------------------------------
@@ -1025,6 +1120,11 @@ function injectStyle() {
       .dark .bk-diff-del { background:#7f1d1d; color:#fca5a5; }
       .dark .bk-diff-eq  { color:#374151; }
       .dark .bk-diff-skip { color:#4b5563; }
+      .bk-hl-del, .bk-hl-add { border-radius:2px; padding:0 1px; color:inherit; }
+      .bk-hl-del { background:rgba(185,28,28,0.25); }
+      .bk-hl-add { background:rgba(21,128,61,0.25); }
+      .dark .bk-hl-del { background:rgba(252,165,165,0.3); }
+      .dark .bk-hl-add { background:rgba(134,239,172,0.3); }
 
       /* Expand button */
       .bk-expand-btn { display:flex; border:0; font-family:inherit; }
