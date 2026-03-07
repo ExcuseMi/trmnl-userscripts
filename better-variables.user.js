@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TRMNL Better Variables
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.1.0
+// @version      1.1.1
 // @description  Replaces the variables accordion with an interactive JSON tree viewer + YAML export with copy features.
 // @author       ExcuseMi
 // @match        https://trmnl.com/plugin_settings/*/markup/edit*

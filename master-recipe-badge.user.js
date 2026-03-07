@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TRMNL Master Recipe Badges
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.4.3
+// @version      1.5.0
 // @description  Add install and forks badges to Recipe Master plugins on list page and edit page
 // @author       ExcuseMi
 // @match        https://trmnl.com/plugin_settings*
@@ -16,6 +16,25 @@
 
     const LOG_PREFIX = '[TRMNL Recipe Badges]';
     const log = (...args) => console.log(LOG_PREFIX, ...args);
+
+    function isDarkMode() {
+        return document.documentElement.classList.contains('dark');
+    }
+
+    function badgeColorParams() {
+        return isDarkMode()
+            ? 'glyph=white&color=6B4226&labelColor=4A2E1A'
+            : 'glyph=black&color=CDAB8F&labelColor=DC8ADD';
+    }
+
+    function updateAllBadgeColors() {
+        document.querySelectorAll('img[data-badge-base]').forEach(img => {
+            img.src = `${img.dataset.badgeBase}&${badgeColorParams()}`;
+        });
+    }
+
+    new MutationObserver(updateAllBadgeColors)
+        .observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 
     // Original list page functionality
     const LIST_PATH = '/plugin_settings';
@@ -71,7 +90,9 @@
         installsLink.title = 'View recipe installs';
 
         const installsImg = document.createElement('img');
-        installsImg.src = `https://trmnl-badges.gohk.xyz/badge/installs?recipe=${pluginId}&&pretty`;
+        const installsBase = `https://trmnl-badges.gohk.xyz/badge/installs?recipe=${pluginId}&pretty`;
+        installsImg.dataset.badgeBase = installsBase;
+        installsImg.src = `${installsBase}&${badgeColorParams()}`;
         installsImg.alt = 'Installs';
         installsImg.className = 'h-6 w-auto inline-block';
         installsLink.appendChild(installsImg);
@@ -85,7 +106,9 @@
         forksLink.title = 'View recipe forks';
 
         const forksImg = document.createElement('img');
-        forksImg.src = `https://trmnl-badges.gohk.xyz/badge/forks?recipe=${pluginId}&&pretty`;
+        const forksBase = `https://trmnl-badges.gohk.xyz/badge/forks?recipe=${pluginId}&pretty`;
+        forksImg.dataset.badgeBase = forksBase;
+        forksImg.src = `${forksBase}&${badgeColorParams()}`;
         forksImg.alt = 'Forks';
         forksImg.className = 'h-6 w-auto inline-block';
         forksLink.appendChild(forksImg);
@@ -98,21 +121,25 @@
         return true;
     }
 
-    // Handle edit page
+    // Handle edit page — returns true when done (badges added or definitively skipped)
     function handleEditPage() {
         const pluginId = getPluginIdFromEditUrl();
 
         if (!pluginId) {
             log('Edit page: Could not extract plugin ID from URL');
-            return;
+            return true; // nothing to do
         }
 
-        if (!hasDeleteButton()) {
-            log('Edit page: Delete button not found, adding badges');
-            addEditPageBadges(pluginId);
-        } else {
+        if (hasDeleteButton()) {
             log('Edit page: Delete button found, skipping badges');
+            return true; // definitively not a Recipe Master
         }
+
+        // Actions container not yet in DOM — wait for it
+        const actionsContainer = document.querySelector('.flex.justify-start.sm\\:justify-end.items-center.shrink-0.gap-3.flex-wrap');
+        if (!actionsContainer) return false;
+
+        return addEditPageBadges(pluginId);
     }
 
     function waitForEditPage() {
@@ -122,7 +149,7 @@
         log('Edit page: Actions container not ready, observing:', observeTarget.tagName);
 
         const observer = new MutationObserver(() => {
-            if (addEditPageBadges(getPluginIdFromEditUrl())) {
+            if (handleEditPage()) {
                 observer.disconnect();
             }
         });
@@ -191,7 +218,9 @@
             installsLink.rel = 'noopener noreferrer';
 
             const installsImg = document.createElement('img');
-            installsImg.src = `https://trmnl-badges.gohk.xyz/badge/installs?recipe=${pluginId}&&pretty`;
+            const installsBase = `https://trmnl-badges.gohk.xyz/badge/installs?recipe=${pluginId}&pretty`;
+            installsImg.dataset.badgeBase = installsBase;
+            installsImg.src = `${installsBase}&${badgeColorParams()}`;
             installsImg.alt = 'Installs';
             installsImg.className = 'h-6 w-auto inline-block';
             installsLink.appendChild(installsImg);
@@ -203,7 +232,9 @@
             forksLink.rel = 'noopener noreferrer';
 
             const forksImg = document.createElement('img');
-            forksImg.src = `https://trmnl-badges.gohk.xyz/badge/forks?recipe=${pluginId}&&pretty`;
+            const forksBase = `https://trmnl-badges.gohk.xyz/badge/forks?recipe=${pluginId}&pretty`;
+            forksImg.dataset.badgeBase = forksBase;
+            forksImg.src = `${forksBase}&${badgeColorParams()}`;
             forksImg.alt = 'Forks';
             forksImg.className = 'h-6 w-auto inline-block';
             forksLink.appendChild(forksImg);

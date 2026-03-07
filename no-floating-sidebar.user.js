@@ -2,7 +2,7 @@
 // @name         No Floating Sidebar
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
 // @description  Moves the floating bottom sidebar into the top nav and adds a Private Plugins button
-// @version      1.3.1
+// @version      1.3.2
 // @description  Moves the floating bottom sidebar
 // @author       ExcuseMi
 // @match        https://trmnl.com/*
@@ -14,6 +14,9 @@
 
 (function() {
     'use strict';
+
+    const LOG_PREFIX = '[No Floating Sidebar]';
+    const log = (...args) => console.log(LOG_PREFIX, ...args);
 
     const MOVED_MARKER = 'data-no-floating-moved';
     const PRIVATE_BUTTON_ID = 'private-plugin-button';
@@ -79,7 +82,7 @@
         floatingSidebar.remove();
 
         injectCompactStyle();
-        console.log('Sidebar moved and compacted.');
+        log('Sidebar moved and compacted.');
 
         addPrivatePluginButton(sidebarList); // Add custom button
         return true;
@@ -106,7 +109,7 @@
         </div>
         `;
         ulElement.appendChild(li);
-        console.log('Private Plugins button added!');
+        log('Private Plugins button added!');
     }
 
     // Initial attempt + observer + Turbo events

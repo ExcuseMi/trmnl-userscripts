@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TRMNL Shared View Selector
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.1.3
+// @version      1.1.4
 // @description  Adds a view layout combobox (shared page only). Fetches view templates from plugin archive and injects them into preview requests.
 // @author       ExcuseMi
 // @match        https://trmnl.com/plugin_settings/*/markup/edit*
@@ -70,7 +70,7 @@
     if (key) sessionStorage.removeItem(key);
     viewFilesCache = null;
     viewFilesPromise = loadViewFiles().catch(err =>
-      console.warn('[TRMNL] Failed to reload view files:', err)
+      console.warn('[TRMNL View Selector] Failed to reload view files:', err)
     );
     console.log('[TRMNL View Selector] cache cleared');
   }
@@ -121,7 +121,7 @@
   }
 
   viewFilesPromise = loadViewFiles().catch(err =>
-    console.warn('[TRMNL] Failed to pre-load view files:', err)
+    console.warn('[TRMNL View Selector] Failed to pre-load view files:', err)
   );
 
   function getCurrentSize() {

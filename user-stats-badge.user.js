@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TRMNL User Stats Badge
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.3.1
+// @version      1.4.0
 // @description  Display user install/fork/connection badges on the right side of the Private Plugin header
 // @author       ExcuseMi
 // @match        https://trmnl.com/*
@@ -21,6 +21,25 @@
     const BADGE_ID = 'trmnl-user-stats-badge';
     const TARGET_PATH = '/plugin_settings';
     const TARGET_PARAM = 'keyname=private_plugin';
+
+    function isDarkMode() {
+        return document.documentElement.classList.contains('dark');
+    }
+
+    function badgeColorParams() {
+        return isDarkMode()
+            ? 'glyph=white&color=6B4226&labelColor=4A2E1A'
+            : 'glyph=black&color=CDAB8F&labelColor=DC8ADD';
+    }
+
+    function updateBadgeColors() {
+        const img = document.querySelector(`#${BADGE_ID} img[data-badge-base]`);
+        if (!img) return;
+        img.src = `${img.dataset.badgeBase}&${badgeColorParams()}`;
+    }
+
+    new MutationObserver(updateBadgeColors)
+        .observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 
     function isTargetPage() {
         return location.pathname === TARGET_PATH && location.search.includes(TARGET_PARAM);
@@ -101,15 +120,23 @@
 
         const badgeContainer = document.createElement('div');
         badgeContainer.id = BADGE_ID;
-        badgeContainer.className = 'flex items-center gap-2 mr-2';
+        badgeContainer.className = 'flex items-center gap-2 mr-2 py-2';
 
         const img = document.createElement('img');
-        img.src = `https://trmnl-badges.gohk.xyz/badge/connections?userId=${userId}&pretty`;
+        const badgeBase = `https://trmnl-badges.gohk.xyz/badge/connections?userId=${userId}&pretty`;
+        img.dataset.badgeBase = badgeBase;
+        img.src = `${badgeBase}&${badgeColorParams()}`;
         img.alt = 'Connections';
-        img.className = 'h-6 inline-block';
+        img.className = 'h-5 inline-block';
         badgeContainer.appendChild(img);
 
-        rightContainer.prepend(badgeContainer);
+        const importBtn = Array.from(rightContainer.children).find(el =>
+            el.textContent.trim().toLowerCase().includes('import'));
+        if (importBtn) {
+            rightContainer.insertBefore(badgeContainer, importBtn);
+        } else {
+            rightContainer.prepend(badgeContainer);
+        }
         log('Badge inserted successfully.');
         return true;
     }

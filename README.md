@@ -6,6 +6,21 @@ These scripts improve usability, simplify navigation, and add helpful tools when
 
 ---
 
+## 💾 Editor Backups
+
+Automatically snapshots the full plugin archive **before and after every save**. View per-file diffs between any two snapshots and restore a previous version with one click. A backup count badge appears in the page header on all plugin settings pages.
+
+- Tracks all archive files: `shared`, `full`, `half_horizontal`, `half_vertical`, `quadrant` layouts, `settings.yml`, and `transform.js`
+- Per-file diff view with expand/collapse
+- Restore "before" or "after" state via the TRMNL API (requires API key)
+- Configurable max backup count and age retention
+- On the Account page, a **Use in Backup Script** button saves your API key directly to the script
+
+**Install:**
+https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/editor-backups.user.js
+
+---
+
 ## 📌 Sticky Preview
 
 Adds a toggle button to the markup editor toolbar that keeps the **preview panel sticky** while scrolling through a long editor. The preview stays pinned just below the page header, so you can always see the result while editing code at the bottom of the file. State is persisted across page loads.
