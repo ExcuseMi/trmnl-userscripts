@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TRMNL Master Recipe Badges
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.5.1
+// @version      1.5.2
 // @description  Add install and forks badges to Recipe Master plugins on list page and edit page
 // @author       ExcuseMi
 // @match        https://trmnl.com/plugin_settings*
@@ -23,8 +23,8 @@
 
     function badgeColorParams() {
         return isDarkMode()
-            ? 'glyph=white&color=FFA348&labelColor=241F31'
-            : 'glyph=white&color=FFBE6F&labelColor=77767B';
+            ? 'glyph=white&color=E66100&labelColor=000000'
+            : 'glyph=white&color=000000&labelColor=77767B';
     }
 
     function updateAllBadgeColors() {
