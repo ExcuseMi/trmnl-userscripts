@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TRMNL User Stats Badge
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.4.2
+// @version      1.4.3
 // @description  Display user install/fork/connection badges on the right side of the Private Plugin header
 // @author       ExcuseMi
 // @match        https://trmnl.com/*
@@ -120,14 +120,14 @@
 
         const badgeContainer = document.createElement('div');
         badgeContainer.id = BADGE_ID;
-        badgeContainer.className = 'flex items-center gap-2 mr-2 py-2';
+        badgeContainer.className = 'flex items-center gap-2 mr-2';
 
         const img = document.createElement('img');
         const badgeBase = `https://trmnl-badges.gohk.xyz/badge/connections?userId=${userId}&pretty`;
         img.dataset.badgeBase = badgeBase;
         img.src = `${badgeBase}&${badgeColorParams()}`;
         img.alt = 'Connections';
-        img.className = 'h-5 inline-block';
+        img.className = 'h-9 inline-block';
         badgeContainer.appendChild(img);
 
         const importBtn = Array.from(rightContainer.children).find(el =>
