@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TRMNL User Stats Badge
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.4.0
+// @version      1.4.1
 // @description  Display user install/fork/connection badges on the right side of the Private Plugin header
 // @author       ExcuseMi
 // @match        https://trmnl.com/*
@@ -28,8 +28,8 @@
 
     function badgeColorParams() {
         return isDarkMode()
-            ? 'glyph=white&color=6B4226&labelColor=4A2E1A'
-            : 'glyph=black&color=CDAB8F&labelColor=DC8ADD';
+            ? 'glyph=white&color=FFA348&labelColor=241F31'
+            : 'glyph=white&color=FFBE6F&labelColor=77767B';
     }
 
     function updateBadgeColors() {
