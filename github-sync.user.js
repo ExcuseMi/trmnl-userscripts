@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TRMNL GitHub Sync
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      0.0.5
+// @version      0.0.6
 // @description  Push your TRMNL plugin code to a GitHub repository and pull it back on demand.
 // @author       ExcuseMi
 // @match        https://trmnl.com/plugin_settings*
@@ -577,8 +577,8 @@
         for (const f of dir) { if (f.type === 'file') currentShas[f.name] = f.sha; }
       }
     } catch (e) {
-      if (!e.message.includes('404')) throw e;
-      // Path doesn't exist yet — first push, treat as all-new
+      if (!e.message.includes('404') && !e.message.includes('409')) throw e;
+      // 404 = path doesn't exist yet; 409 = repo is empty — treat both as first push (all-new)
     }
     const trmnlShas = Object.fromEntries(
       await Promise.all(names.map(async n => [n, await gitBlobSha(files[n])]))
