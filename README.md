@@ -20,6 +20,10 @@ Push your TRMNL plugin code to a GitHub repository and pull it back on demand â€
 - **Plugin list badges** â€” GitHub icon + repo name shown next to each configured plugin on the private plugins page
 - Supports dark mode, Turbo navigation, and per-plugin branch/path overrides
 
+**Screenshot:**
+
+![github-sync-1.png](images/github-sync-1.png)
+- 
 **Install:**
 https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/github-sync.user.js
 
