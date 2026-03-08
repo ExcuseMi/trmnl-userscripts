@@ -6,6 +6,25 @@ These scripts improve usability, simplify navigation, and add helpful tools when
 
 ---
 
+## 🐙 GitHub Sync
+
+Push your TRMNL plugin code to a GitHub repository and pull it back on demand — keeping your plugins version-controlled and synced across browsers and devices.
+
+- **Push to GitHub** — uploads all plugin files (`settings.yml`, layout `.liquid` files) to a configured repo and branch
+- **Pull from GitHub** — downloads files from GitHub and applies them to the plugin via the TRMNL API
+- **Auto-push** — optionally push on every TRMNL save
+- **Compare with GitHub** — inline diff between the live TRMNL code and what's in GitHub
+- **Recent commits** — shows the last 5 commits for the plugin path, each expandable to show an inline diff
+- **Config repo** — a single `.trmnl-sync.json` file in a dedicated GitHub repo stores all plugin configs, keeping settings in sync across browsers automatically
+- **Browse repos** — searchable dropdown to pick any of your GitHub repositories
+- **Plugin list badges** — GitHub icon + repo name shown next to each configured plugin on the private plugins page
+- Supports dark mode, Turbo navigation, and per-plugin branch/path overrides
+
+**Install:**
+https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/github-sync.user.js
+
+---
+
 ## 💾 Editor Backups
 
 Automatically snapshots the full plugin archive **before and after every save**. View per-file diffs between any two snapshots and restore a previous version with one click. A backup count badge appears in the page header on all plugin settings pages.

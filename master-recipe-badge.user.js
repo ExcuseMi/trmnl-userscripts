@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TRMNL Master Recipe Badges
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.5.3
+// @version      1.5.4
 // @description  Add install and forks badges to Recipe Master plugins on list page and edit page
 // @author       ExcuseMi
 // @match        https://trmnl.com/plugin_settings*
@@ -183,16 +183,13 @@
         pluginRows.forEach(row => {
             if (row.getAttribute(BADGE_ATTR) === 'done') return;
 
-            const badgeSpan = row.querySelector('.inline-block.bg-gray-100.text-gray-600.text-xs.font-medium');
+            // Look for any inline badge element whose text is exactly 'Recipe Master'.
+            // Avoids relying on a brittle list of Tailwind classes that can change.
+            const badgeSpan = Array.from(row.querySelectorAll('span,div'))
+                .find(el => el.children.length === 0 && el.textContent.trim() === 'Recipe Master');
             // If the badge span hasn't rendered yet, leave the row unmarked so the
             // observer can retry on the next mutation.
             if (!badgeSpan) return;
-
-            const badgeText = badgeSpan.textContent.trim();
-            if (badgeText !== 'Recipe Master') {
-                row.setAttribute(BADGE_ATTR, 'skipped');
-                return;
-            }
 
             const pluginId = row.getAttribute('data-plugin-settings-id');
             if (!pluginId) {
@@ -203,9 +200,9 @@
 
             const actionsDiv = row.closest('.flex.items-center.text-sm.cursor-pointer')
                 ?.querySelector('.flex.items-center.flex-shrink-0');
+            // actionsDiv may still be loading — leave row unmarked so observer retries.
             if (!actionsDiv) {
-                log(`List page: Plugin ${pluginId}: actions div not found.`);
-                row.setAttribute(BADGE_ATTR, 'no-actions');
+                log(`List page: Plugin ${pluginId}: actions div not yet in DOM, will retry.`);
                 return;
             }
 
