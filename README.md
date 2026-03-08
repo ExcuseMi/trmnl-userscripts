@@ -179,7 +179,9 @@ https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/user-stats-bad
 
 3. Your userscript manager will prompt you to install the script.
 
-4. Scripts will automatically update when new versions are published.
+4. **Auto-updates:** Tampermonkey updates scripts automatically. Violentmonkey can also check for updates on a schedule — configure it under **Settings → Check for script updates every N day(s)**, or use the **Update All** button in the dashboard.
+
+5. **Tampermonkey on Chrome:** You may need to grant the extension access to your browser activity. If a script doesn't seem to run, go to the Tampermonkey extension settings and enable **"Allow access to file URLs"** or switch the extension access to **"Allow on all sites"** in Chrome's extension settings.
 
 
 ---
