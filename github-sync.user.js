@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TRMNL GitHub Sync
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      0.0.6
+// @version      0.0.7
 // @description  Push your TRMNL plugin code to a GitHub repository and pull it back on demand.
 // @author       ExcuseMi
 // @match        https://trmnl.com/plugin_settings*
@@ -592,17 +592,49 @@
     onLog(`Changes: ${[...changed, ...deleted.map(n => `${n} (deleted)`)].join(', ')}`);
 
     onLog(`Reading branch "${branch}"…`);
-    let headSha  = null;
-    let baseTree = null;
+    let headSha    = null;
+    let baseTree   = null;
+    let repoIsEmpty = false;
     try {
       const refData    = await ghFetch(`/repos/${owner}/${repo}/git/ref/heads/${encodeURIComponent(branch)}`);
       headSha          = refData.object.sha;
       const headCommit = await ghFetch(`/repos/${owner}/${repo}/git/commits/${headSha}`);
       baseTree         = headCommit.tree.sha;
     } catch (e) {
-      if (!e.message.includes('404') && !e.message.includes('409')) throw e;
-      // 404 = branch not found; 409 = repo is empty — treat both as "first push"
-      onLog(`Branch "${branch}" not found — will create it on first push.`);
+      if (e.message.includes('409')) {
+        repoIsEmpty = true; // Git Data API unavailable until repo has at least one commit
+        onLog('Repository is empty — will initialize via Contents API.');
+      } else if (e.message.includes('404')) {
+        onLog(`Branch "${branch}" not found — will create it on first push.`);
+      } else {
+        throw e;
+      }
+    }
+
+    // ── Empty repo: Git Data API (blobs/trees/commits) returns 409 on repos with no commits.
+    // Use the Contents API instead — it works on empty repos and initializes the branch.
+    // This creates one commit per file; subsequent pushes use the efficient Data API path.
+    if (repoIsEmpty) {
+      onLog('Initializing repository…');
+      const pushedShas = {};
+      let lastCommitSha = null;
+      for (const name of names) {
+        const res = await ghFetch(`/repos/${owner}/${repo}/contents/${basePath}/${name}`, {
+          method:  'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({
+            message: name === names[names.length - 1] ? message : `Initialize: add ${name}`,
+            content: btoa(unescape(encodeURIComponent(normalizeLF(files[name])))),
+            branch,
+          }),
+        });
+        pushedShas[name] = res.content.sha;
+        lastCommitSha = res.commit.sha;
+      }
+      setLastPushShas(pluginId, pushedShas);
+      recordPushTime(pluginId);
+      onLog(`✓ Pushed ${names.length} files to ${owner}/${repo}/${basePath}`);
+      return `https://github.com/${owner}/${repo}/commit/${lastCommitSha}`;
     }
 
     onLog('Creating blobs…');
