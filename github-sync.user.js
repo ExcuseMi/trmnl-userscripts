@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TRMNL GitHub Sync
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      0.0.7
+// @version      0.0.8
 // @description  Push your TRMNL plugin code to a GitHub repository and pull it back on demand.
 // @author       ExcuseMi
 // @match        https://trmnl.com/plugin_settings*
@@ -1342,12 +1342,30 @@
       'text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/60'
     );
     createRepoBtn.type = 'button';
-    const pluginSlug    = slugify(getPluginName() || `plugin-${pluginId}`);
-    const suggestedName = `trmnl-${pluginSlug}-plugin`;
+    let suggestedName = `trmnl-plugin-${pluginId}`;
     createRepoBtn.textContent = `+ Create "${suggestedName}" on GitHub`;
-    createRepoBtn.style.display = effectiveRepo(cfg) ? 'none' : '';
+    // Always start hidden — shown once we have the real name from settings.yml
+    createRepoBtn.style.display = 'none';
     const createStatus = mk('p', 'text-xs mt-1 text-gray-500 dark:text-gray-400');
-    createStatus.textContent = createRepoBtn.style.display === '' ? 'A new tab will open to create the repo. Come back and paste the URL above.' : '';
+
+    // Fetch archive to get the plugin name from settings.yml (most reliable source)
+    fetchArchive(pluginId).then(files => {
+      const nameFromYaml = extractNameFromYaml(files['settings.yml'] || files['settings.yaml'] || '');
+      suggestedName = `trmnl-${slugify(nameFromYaml || getPluginName() || `plugin-${pluginId}`)}-plugin`;
+      createRepoBtn.textContent = `+ Create "${suggestedName}" on GitHub`;
+      if (!effectiveRepo(cfg) && !repoIn.value.trim()) {
+        createRepoBtn.style.display = '';
+        createStatus.textContent = 'A new tab will open to create the repo. Come back and paste the URL above.';
+      }
+    }).catch(() => {
+      // Fallback: show with DOM-derived name if archive fetch fails
+      suggestedName = `trmnl-${slugify(getPluginName() || `plugin-${pluginId}`)}-plugin`;
+      createRepoBtn.textContent = `+ Create "${suggestedName}" on GitHub`;
+      if (!effectiveRepo(cfg) && !repoIn.value.trim()) {
+        createRepoBtn.style.display = '';
+        createStatus.textContent = 'A new tab will open to create the repo. Come back and paste the URL above.';
+      }
+    });
 
     repoIn.addEventListener('input', () => {
       const empty = !repoIn.value.trim();
