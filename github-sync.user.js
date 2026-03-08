@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         TRMNL GitHub Sync (WIP)
+// @name         TRMNL GitHub Sync
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
 // @version      0.0.1
 // @description  Push your TRMNL plugin code to a GitHub repository and pull it back on demand.
@@ -237,7 +237,7 @@
 
   function ghBuildDiffEl(oldText, newText) {
     if (oldText === newText) {
-      const p = mk('p', 'text-xs text-gray-400 dark:text-gray-500 italic py-1');
+      const p = mk('p', 'text-xs text-gray-500 dark:text-gray-400 italic py-1');
       p.textContent = 'No changes in this file.';
       return p;
     }
@@ -305,7 +305,7 @@
 
     const expandBtn = mk('button',
       'w-full flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium ' +
-      'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 ' +
+      'text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 ' +
       'border-t border-gray-200 dark:border-gray-700 cursor-pointer ' +
       'bg-gray-50 dark:bg-gray-800 transition-colors'
     );
@@ -346,7 +346,7 @@
     clip.appendChild(pre);
     const btn = mk('button',
       'w-full flex items-center justify-center gap-1.5 py-1.5 text-xs font-medium ' +
-      'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 ' +
+      'text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 ' +
       'border-t border-gray-200 dark:border-gray-700 cursor-pointer ' +
       'bg-gray-50 dark:bg-gray-800 transition-colors'
     );
@@ -388,15 +388,16 @@
     return body;
   }
 
-  // Check if a repo exists and is accessible. Returns null if OK, error string otherwise.
+  // Check if a repo exists and is accessible.
+  // Returns { error: string|null, isPublic: bool }.
   async function ghCheckRepo(owner, repo) {
     try {
-      await ghFetch(`/repos/${owner}/${repo}`);
-      return null;
+      const data = await ghFetch(`/repos/${owner}/${repo}`);
+      return { error: null, isPublic: data.private === false };
     } catch (e) {
-      if (e.message.includes('404')) return `Repository "${owner}/${repo}" not found or not accessible.`;
-      if (e.message.includes('401') || e.message.includes('403')) return `No access to "${owner}/${repo}" — check your token permissions.`;
-      return e.message;
+      if (e.message.includes('404')) return { error: `Repository "${owner}/${repo}" not found or not accessible.`, isPublic: false };
+      if (e.message.includes('401') || e.message.includes('403')) return { error: `No access to "${owner}/${repo}" — check your token permissions.`, isPublic: false };
+      return { error: e.message, isPublic: false };
     }
   }
 
@@ -950,7 +951,7 @@
       'gh-global-hdr flex items-center justify-between px-5 py-3 cursor-pointer select-none ' +
       'hover:bg-gray-50 transition-colors'
     );
-    const globalArrow = mk('span', 'text-gray-400 dark:text-gray-500 text-xs mr-2', isGlobalConfigured() ? '▸' : '▾');
+    const globalArrow = mk('span', 'text-gray-500 dark:text-gray-400 text-xs mr-2', isGlobalConfigured() ? '▸' : '▾');
     const globalTitleRow = mk('div', 'flex items-center');
     globalTitleRow.append(globalArrow, mk('span',
       'text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400', 'Global Setup'
@@ -1029,24 +1030,30 @@
     const tokenFieldWrap = mk('div', '');
     tokenFieldWrap.appendChild(mk('p', 'text-xs font-medium text-gray-600 dark:text-gray-400 mb-1', 'GitHub Token'));
     tokenFieldWrap.appendChild(mkKeyField(getToken(), 'ghp_xxxxxxxxxxxx', saveToken));
-    const tokenHint = mk('p', 'text-xs text-gray-400 dark:text-gray-500 mt-1');
+    const tokenHint = mk('p', 'text-xs text-gray-500 dark:text-gray-400 mt-1');
     tokenHint.innerHTML = 'Needs "repo" scope. <a href="https://github.com/settings/tokens/new?scopes=repo&description=TRMNL+GitHub+Sync" target="_blank" rel="noopener noreferrer" style="color:#3b82f6;text-decoration:underline;">Create one</a>.';
     tokenFieldWrap.appendChild(tokenHint);
     globalBody.appendChild(tokenFieldWrap);
 
     // Config repo
-    const cfgRepoWrap   = mk('div', '');
-    const cfgRepoStatus = mk('p', 'text-xs mt-1');
+    const cfgRepoWrap    = mk('div', '');
+    const cfgRepoStatus  = mk('p', 'text-xs mt-1');
+    const cfgRepoWarning = mk('div',
+      'hidden mt-2 px-3 py-2 rounded-lg border border-red-400 bg-red-50 dark:bg-red-950/50 dark:border-red-700 text-red-700 dark:text-red-300 text-xs font-medium'
+    );
+    cfgRepoWarning.innerHTML =
+      '⚠ <strong>This repository is PUBLIC.</strong> Your GitHub token and TRMNL API key are exposed to the world. ' +
+      '<strong>Delete or revoke them immediately</strong>, then recreate this repo as private.';
     const cfgRepoIn     = mkInput('https://github.com/you/trmnl-github-sync', getConfigRepo());
     cfgRepoWrap.appendChild(mk('p', 'text-xs font-medium text-gray-600 dark:text-gray-400 mb-1', 'Config repository'));
-    cfgRepoWrap.append(cfgRepoIn, cfgRepoStatus);
+    cfgRepoWrap.append(cfgRepoIn, cfgRepoStatus, cfgRepoWarning);
     globalBody.appendChild(cfgRepoWrap);
 
     // TRMNL API key
     const trmnlFieldWrap = mk('div', '');
     trmnlFieldWrap.appendChild(mk('p', 'text-xs font-medium text-gray-600 dark:text-gray-400 mb-1', 'TRMNL API Key'));
     trmnlFieldWrap.appendChild(mkKeyField(getTrmnlKey(), 'user_xxxxx', saveTrmnlKey));
-    trmnlFieldWrap.appendChild(mk('p', 'text-xs text-gray-400 dark:text-gray-500 mt-1',
+    trmnlFieldWrap.appendChild(mk('p', 'text-xs text-gray-500 dark:text-gray-400 mt-1',
       'Required for Pull from GitHub. Found on your account page.'));
     globalBody.appendChild(trmnlFieldWrap);
 
@@ -1120,7 +1127,7 @@
       const parts = normalized.split('/');
       const valid = !normalized || (parts.length === 2 && !!parts[0] && !!parts[1]);
       if (!normalized) {
-        cfgRepoStatus.className = 'text-xs mt-1 text-gray-400 dark:text-gray-500';
+        cfgRepoStatus.className = 'text-xs mt-1 text-gray-500 dark:text-gray-400';
         cfgRepoStatus.innerHTML =
           'Where <code>.trmnl-sync.json</code> lives. Recommended: create a private ' +
           '<a href="https://github.com/new?name=trmnl-github-sync&visibility=private" target="_blank" ' +
@@ -1137,13 +1144,14 @@
           clearTimeout(cfgRepoTimer);
           cfgRepoTimer = setTimeout(async () => {
             if (getToken()) {
-              cfgRepoStatus.className   = 'text-xs mt-1 text-gray-400 dark:text-gray-500 italic';
+              cfgRepoStatus.className   = 'text-xs mt-1 text-gray-500 dark:text-gray-400 italic';
               cfgRepoStatus.textContent = 'Checking repository…';
               const [o, r] = normalized.split('/');
-              const err = await ghCheckRepo(o, r);
-              if (err) {
+              const { error, isPublic } = await ghCheckRepo(o, r);
+              cfgRepoWarning.classList.toggle('hidden', !isPublic);
+              if (error) {
                 cfgRepoStatus.className   = 'gh-repo-err';
-                cfgRepoStatus.textContent = err;
+                cfgRepoStatus.textContent = error;
                 return;
               }
             }
@@ -1157,12 +1165,13 @@
     // so openPanel pre-fetches from the new repo and buildPanel gets fresh data.
     async function reloadFromConfigRepo(repoStr) {
       if (!getToken()) return;
-      cfgRepoStatus.className   = 'text-xs mt-1 text-gray-400 dark:text-gray-500 italic';
+      cfgRepoStatus.className   = 'text-xs mt-1 text-gray-500 dark:text-gray-400 italic';
       cfgRepoStatus.textContent = 'Loading from GitHub…';
       try {
         const [o, r] = repoStr.split('/');
-        const err = await ghCheckRepo(o, r);
-        if (err) { cfgRepoStatus.className = 'gh-repo-err'; cfgRepoStatus.textContent = err; return; }
+        const { error, isPublic } = await ghCheckRepo(o, r);
+        cfgRepoWarning.classList.toggle('hidden', !isPublic);
+        if (error) { cfgRepoStatus.className = 'gh-repo-err'; cfgRepoStatus.textContent = error; return; }
         cfgRepoStatus.className   = 'gh-repo-ok';
         cfgRepoStatus.textContent = `✓ ${repoStr}`;
       } catch (e) {
@@ -1176,6 +1185,11 @@
     }
 
     validateCfgRepo(getConfigRepo(), false); // show initial state only — openPanel pre-fetched
+    // Silently check visibility on open so the warning shows for an already-configured repo
+    if (getToken() && getConfigRepo()) {
+      const [_o, _r] = getConfigRepo().split('/');
+      ghCheckRepo(_o, _r).then(({ isPublic }) => cfgRepoWarning.classList.toggle('hidden', !isPublic));
+    }
     cfgRepoIn.addEventListener('input',  () => validateCfgRepo(cfgRepoIn.value, false));
     cfgRepoIn.addEventListener('change', () => validateCfgRepo(cfgRepoIn.value, true));
 
@@ -1193,12 +1207,12 @@
     const cfgHdrRow = mk('div',
       'gh-repo-hdr flex items-center justify-between px-5 py-3 cursor-pointer select-none transition-colors'
     );
-    const cfgArrow    = mk('span', 'text-gray-400 dark:text-gray-500 text-xs mr-2', isRepoConfigured ? '▸' : '▾');
+    const cfgArrow    = mk('span', 'text-gray-500 dark:text-gray-400 text-xs mr-2', isRepoConfigured ? '▸' : '▾');
     const cfgTitleGrp = mk('div', 'flex items-center flex-shrink-0');
     cfgTitleGrp.append(cfgArrow, mk('span',
       'text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400', 'Repository'
     ));
-    const cfgSummary = mk('span', 'text-xs text-gray-400 dark:text-gray-500 italic truncate ml-2');
+    const cfgSummary = mk('span', 'text-xs text-gray-500 dark:text-gray-400 italic truncate ml-2');
     if (isRepoConfigured) cfgSummary.textContent = `${effectiveRepo(cfg)} · ${cfg.branch || 'main'}`;
     cfgHdrRow.append(cfgTitleGrp, cfgSummary);
 
@@ -1214,7 +1228,7 @@
 
     // Sync status lives at top of body
     const cfgBodyHdr = mk('div', 'flex items-center justify-end mb-3');
-    const syncStatus = mk('span', 'text-xs text-gray-400 dark:text-gray-500 italic');
+    const syncStatus = mk('span', 'text-xs text-gray-500 dark:text-gray-400 italic');
     cfgBodyHdr.appendChild(syncStatus);
     cfgBody.appendChild(cfgBodyHdr);
 
@@ -1276,12 +1290,12 @@
         repoIn.value = normalized;
         saveConfig(pluginId, { ...getConfig(pluginId), repo: normalized });
         if (getToken()) {
-          repoStatus.className   = 'text-xs mt-1 text-gray-400 dark:text-gray-500 italic';
+          repoStatus.className   = 'text-xs mt-1 text-gray-500 dark:text-gray-400 italic';
           repoStatus.textContent = 'Checking repository…';
           const [o, r] = normalized.split('/');
-          const err = await ghCheckRepo(o, r);
-          repoStatus.className   = err ? 'gh-repo-err' : 'gh-repo-ok';
-          repoStatus.textContent = err || `✓ ${normalized}`;
+          const { error } = await ghCheckRepo(o, r);
+          repoStatus.className   = error ? 'gh-repo-err' : 'gh-repo-ok';
+          repoStatus.textContent = error || `✓ ${normalized}`;
         }
       }
     });
@@ -1301,7 +1315,7 @@
     const suggestedName = `trmnl-${pluginSlug}-plugin`;
     createRepoBtn.textContent = `+ Create "${suggestedName}" on GitHub`;
     createRepoBtn.style.display = effectiveRepo(cfg) ? 'none' : '';
-    const createStatus = mk('p', 'text-xs mt-1 text-gray-400 dark:text-gray-500');
+    const createStatus = mk('p', 'text-xs mt-1 text-gray-500 dark:text-gray-400');
     createStatus.textContent = createRepoBtn.style.display === '' ? 'A new tab will open to create the repo. Come back and paste the URL above.' : '';
 
     repoIn.addEventListener('input', () => {
@@ -1336,7 +1350,7 @@
     // Path — with live resolved preview
     const pathGroup = mkFieldGroup('Path in repo');
     const pathIn    = mkInput('plugin', cfg.path);
-    const pathHint  = mk('p', 'text-xs text-gray-400 dark:text-gray-500 mt-1',
+    const pathHint  = mk('p', 'text-xs text-gray-500 dark:text-gray-400 mt-1',
       `Resolved: ${resolvePath(cfg.path, pluginId)}`
     );
     pathIn.addEventListener('input', () => {
@@ -1346,7 +1360,7 @@
       saveConfig(pluginId, { ...getConfig(pluginId), path: pathIn.value.trim() });
     });
     pathGroup.append(pathIn, pathHint);
-    pathGroup.appendChild(mk('p', 'text-xs text-gray-400 dark:text-gray-500',
+    pathGroup.appendChild(mk('p', 'text-xs text-gray-500 dark:text-gray-400',
       '{id} is replaced with the plugin ID.'
     ));
     cfgBody.appendChild(pathGroup);
@@ -1356,7 +1370,7 @@
     const msgIn    = mkInput('TRMNL sync: {name} (plugin {id})', cfg.commitMsg);
     msgIn.addEventListener('change', () => saveConfig(pluginId, { ...getConfig(pluginId), commitMsg: msgIn.value.trim() }));
     msgGroup.appendChild(msgIn);
-    msgGroup.appendChild(mk('p', 'text-xs text-gray-400 dark:text-gray-500 mt-1',
+    msgGroup.appendChild(mk('p', 'text-xs text-gray-500 dark:text-gray-400 mt-1',
       '{id} = plugin ID, {name} = plugin name.'
     ));
     cfgBody.appendChild(msgGroup);
@@ -1375,7 +1389,7 @@
     const autoLbl = mk('label', 'flex flex-col cursor-pointer select-none');
     autoLbl.htmlFor = 'gh-autopush-toggle';
     autoLbl.appendChild(mk('span', 'text-xs font-medium text-gray-700 dark:text-gray-300', 'Auto-push on save'));
-    autoLbl.appendChild(mk('span', 'text-xs text-gray-400 dark:text-gray-500',
+    autoLbl.appendChild(mk('span', 'text-xs text-gray-500 dark:text-gray-400',
       'Automatically commit to GitHub whenever you save the plugin.'
     ));
     autoWrap.append(autoChk, autoLbl);
@@ -1444,7 +1458,7 @@
       'bg-gray-50 dark:bg-gray-800 p-3 mb-4 font-mono text-xs ' +
       'text-gray-600 dark:text-gray-400 overflow-y-auto gh-log'
     );
-    const logPlaceholder = mk('span', 'text-gray-400 dark:text-gray-500 italic', 'Ready.');
+    const logPlaceholder = mk('span', 'text-gray-500 dark:text-gray-400 italic', 'Ready.');
     logArea.appendChild(logPlaceholder);
 
     function appendLog(msg, isError = false) {
@@ -1458,7 +1472,7 @@
 
     function clearLog() {
       logArea.replaceChildren();
-      logArea.appendChild(mk('span', 'text-gray-400 dark:text-gray-500 italic', 'Ready.'));
+      logArea.appendChild(mk('span', 'text-gray-500 dark:text-gray-400 italic', 'Ready.'));
     }
 
     // Push button
@@ -1521,7 +1535,7 @@
         // Hide pull button: we just pushed so GitHub matches TRMNL
         document.getElementById(PULL_BTN_ID)?.style.setProperty('display', 'none');
         // Commits will be stale too — just prompt user to refresh manually
-        const staleNote = mk('p', 'text-xs text-gray-400 dark:text-gray-500 italic mt-1',
+        const staleNote = mk('p', 'text-xs text-gray-500 dark:text-gray-400 italic mt-1',
           'Commits may take a moment to reflect the push — click ↺ to refresh.');
         commitsList.appendChild(staleNote);
       } catch (e) {
@@ -1631,12 +1645,12 @@
     async function loadCommits() {
       const c2 = getConfig(pluginId);
       if (!c2.repo || !getToken()) {
-        commitsList.replaceChildren(mk('p', 'text-xs text-gray-400 dark:text-gray-500 italic', 'Configure a repository to see commits.'));
+        commitsList.replaceChildren(mk('p', 'text-xs text-gray-500 dark:text-gray-400 italic', 'Configure a repository to see commits.'));
         return;
       }
       refreshCommitsBtn.disabled = true;
       refreshCommitsBtn.textContent = '…';
-      commitsList.replaceChildren(mk('p', 'text-xs text-gray-400 dark:text-gray-500 italic', 'Loading…'));
+      commitsList.replaceChildren(mk('p', 'text-xs text-gray-500 dark:text-gray-400 italic', 'Loading…'));
       try {
         const { owner: o2, repo: r2 } = parseRepo(c2);
         const branch2   = c2.branch.trim() || 'main';
@@ -1646,7 +1660,7 @@
         );
         commitsList.replaceChildren();
         if (!commits.length) {
-          commitsList.appendChild(mk('p', 'text-xs text-gray-400 dark:text-gray-500 italic', 'No commits yet for this path.'));
+          commitsList.appendChild(mk('p', 'text-xs text-gray-500 dark:text-gray-400 italic', 'No commits yet for this path.'));
           return;
         }
         for (const c of commits) {
@@ -1665,13 +1679,13 @@
           const info       = mk('div', 'flex-1 min-w-0');
           const msgRow     = mk('div', 'flex items-center gap-1.5');
           const msgSpan    = mk('p', 'text-xs text-gray-700 dark:text-gray-300 truncate flex-1', msg);
-          const diffToggle = mk('button', 'gh-commit-diff-toggle flex-shrink-0 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300');
+          const diffToggle = mk('button', 'gh-commit-diff-toggle flex-shrink-0 text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300');
           diffToggle.type  = 'button';
           diffToggle.title = 'Show diff';
           diffToggle.innerHTML = chevronDown;
           msgRow.append(msgSpan, diffToggle);
           info.appendChild(msgRow);
-          info.appendChild(mk('p', 'text-xs text-gray-400 dark:text-gray-500 mt-0.5', `${author} · ${dateStr}`));
+          info.appendChild(mk('p', 'text-xs text-gray-500 dark:text-gray-400 mt-0.5', `${author} · ${dateStr}`));
           row.append(shaLink, info);
 
           const diffArea = mk('div', '');
@@ -1717,7 +1731,7 @@
         }
       } catch (e) {
         if (e.message.includes('409')) {
-          commitsList.replaceChildren(mk('p', 'text-xs text-gray-400 dark:text-gray-500 italic', 'No commits yet — repository is empty.'));
+          commitsList.replaceChildren(mk('p', 'text-xs text-gray-500 dark:text-gray-400 italic', 'No commits yet — repository is empty.'));
         } else {
           commitsList.replaceChildren(mk('p', 'gh-repo-err text-xs', `Failed to load: ${e.message.slice(0, 80)}`));
         }
