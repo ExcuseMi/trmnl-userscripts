@@ -29,25 +29,6 @@ https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/github-sync.us
 
 ---
 
-## 💾 Editor Backups
-
-Automatically snapshots the full plugin archive **before and after every save**. View per-file diffs between any two snapshots and restore a previous version with one click. A backup count badge appears in the page header on all plugin settings pages.
-
-- Tracks all archive files: `shared`, `full`, `half_horizontal`, `half_vertical`, `quadrant` layouts, `settings.yml`, and `transform.js`
-- Per-file diff view with expand/collapse
-- Restore "before" or "after" state via the TRMNL API (requires API key)
-- Configurable max backup count and age retention
-- On the Account page, a **Use in Backup Script** button saves your API key directly to the script
-
-**Screenshot:**
-
-![backups.png](images/backups.png)
-
-**Install:**
-https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/editor-backups.user.js
-
----
-
 ## 📌 Sticky Preview
 
 Adds a toggle button to the markup editor toolbar that keeps the **preview panel sticky** while scrolling through a long editor. The preview stays pinned just below the page header, so you can always see the result while editing code at the bottom of the file. State is persisted across page loads.
@@ -183,7 +164,26 @@ https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/user-stats-bad
 
 5. **Tampermonkey on Chrome:** You may need to grant the extension access to your browser activity. If a script doesn't seem to run, go to the Tampermonkey extension settings and enable **"Allow access to file URLs"** or switch the extension access to **"Allow on all sites"** in Chrome's extension settings.
 
+---
 
+# Deprecated scripts
+
+## 💾 Editor Backups
+**Deprecated because GitHub Sync is far better and the one I'll be using myself**
+Automatically snapshots the full plugin archive **before and after every save**. View per-file diffs between any two snapshots and restore a previous version with one click. A backup count badge appears in the page header on all plugin settings pages.
+
+- Tracks all archive files: `shared`, `full`, `half_horizontal`, `half_vertical`, `quadrant` layouts, `settings.yml`, and `transform.js`
+- Per-file diff view with expand/collapse
+- Restore "before" or "after" state via the TRMNL API (requires API key)
+- Configurable max backup count and age retention
+- On the Account page, a **Use in Backup Script** button saves your API key directly to the script
+
+**Screenshot:**
+
+![backups.png](images/backups.png)
+
+**Install:**
+https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/editor-backups.user.js
 ---
 
 # License

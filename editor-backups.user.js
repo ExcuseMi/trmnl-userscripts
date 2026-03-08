@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TRMNL Editor Backups
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.3.3
+// @version      1.3.4
 // @description  Automatically snapshots the plugin archive before and after every save. View per-file diffs and restore any backup.
 // @author       ExcuseMi
 // @match        https://trmnl.com/plugin_settings/*
@@ -14,7 +14,9 @@
 // @run-at       document-body
 // ==/UserScript==
 
-
+//Deprecated: Use Github Sync over this one.
+//Leaving this one here as an example if you'd want to do the same.
+//No further support on this one.
 (function () {
   'use strict';
 
