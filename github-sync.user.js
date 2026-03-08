@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TRMNL GitHub Sync
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      0.0.2
+// @version      0.0.3
 // @description  Push your TRMNL plugin code to a GitHub repository and pull it back on demand.
 // @author       ExcuseMi
 // @match        https://trmnl.com/plugin_settings
@@ -1051,7 +1051,7 @@
 
     // TRMNL API key
     const trmnlFieldWrap = mk('div', '');
-    trmnlFieldWrap.appendChild(mk('p', 'text-xs font-medium text-gray-600 dark:text-gray-400 mb-1', 'TRMNL API Key'));
+    trmnlFieldWrap.appendChild(mk('p', 'text-xs font-medium text-gray-600 dark:text-gray-400 mb-1', 'TRMNL User API Key'));
     trmnlFieldWrap.appendChild(mkKeyField(getTrmnlKey(), 'user_xxxxx', saveTrmnlKey));
     trmnlFieldWrap.appendChild(mk('p', 'text-xs text-gray-500 dark:text-gray-400 mt-1',
       'Required for Pull from GitHub. Found on your account page.'));
@@ -2192,7 +2192,7 @@
         display: inline-flex; align-items: center; gap: 0.3rem;
         padding: 0.15rem 0.45rem 0.15rem 0.3rem; border-radius: 5px; cursor: pointer;
         color: #6b7280; text-decoration: none; transition: color 0.15s, background 0.15s;
-        flex-shrink: 0; border: 1px solid transparent;
+        flex-shrink: 0; border: 1px solid transparent; margin-left: 0.5rem;
       }
       .gh-list-badge:hover { color: #111827; background: #f3f4f6; border-color: #e5e7eb; }
       .dark .gh-list-badge { color: #9ca3af; }
@@ -2259,7 +2259,7 @@
       const id = row.getAttribute('data-plugin-settings-id');
       if (!id) { row.setAttribute(LIST_BADGE_ATTR, 'skip'); return; }
       const rowCfg = getConfig(id);
-      if (!effectiveRepo(rowCfg)) { row.setAttribute(LIST_BADGE_ATTR, 'skip'); return; }
+      if (!effectiveRepo(rowCfg)) return; // no config yet — observer will retry once config loads
       const actionsDiv = row.closest('.flex.items-center.text-sm.cursor-pointer')
         ?.querySelector('.flex.items-center.flex-shrink-0');
       if (!actionsDiv) return; // not in DOM yet — observer will retry
@@ -2279,13 +2279,26 @@
     });
   }
 
-  function setupListPage() {
+  async function setupListPage() {
     injectStyle();
     tryInjectListBadges();
+
     const target = document.querySelector('[data-controller="plugin-settings"]') || document.documentElement;
     const obs = new MutationObserver(() => tryInjectListBadges());
     obs.observe(target, { childList: true, subtree: true });
-    setTimeout(() => obs.disconnect(), 30_000);
+    // No hard disconnect — turbo navigation replaces the document, cleaning up automatically
+
+    // Proactively load remote config so badges appear even before the panel is opened
+    const cr = getConfigRepo();
+    if (cr && cr.includes('/') && getToken()) {
+      const [o, r] = cr.split('/');
+      try {
+        const data = await loadAllRemoteConfig(o, r, 'main');
+        if (data) { cacheConfigData(data); tryInjectListBadges(); }
+      } catch (e) {
+        warn('List page: Config preload failed:', e.message);
+      }
+    }
   }
 
   // ---------------------------------------------------------------------------

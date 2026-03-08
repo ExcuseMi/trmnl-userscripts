@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TRMNL Master Recipe Badges
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.5.5
+// @version      1.5.6
 // @description  Add install and forks badges to Recipe Master plugins on list page and edit page
 // @author       ExcuseMi
 // @match        https://trmnl.com/plugin_settings*
@@ -80,7 +80,7 @@
         // Create badges container
         const badgesContainer = document.createElement('div');
         badgesContainer.setAttribute('data-trmnl-edit-badge', 'true');
-        badgesContainer.className = 'flex items-center gap-2 mr-2';
+        badgesContainer.className = 'flex items-center gap-2 mr-2 ml-2';
 
         // Create installs badge
         const installsLink = document.createElement('a');
@@ -168,8 +168,8 @@
         // BADGE_ATTR guards prevent double-processing.
         const observer = new MutationObserver(() => trySetup());
         observer.observe(observeTarget, { childList: true, subtree: true });
-        // Safety disconnect after 30s
-        setTimeout(() => observer.disconnect(), 30_000);
+        // Safety disconnect after 60s
+        setTimeout(() => observer.disconnect(), 60_000);
     }
 
     function trySetup() {
