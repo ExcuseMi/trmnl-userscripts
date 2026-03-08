@@ -39,6 +39,10 @@ Automatically snapshots the full plugin archive **before and after every save**.
 - Configurable max backup count and age retention
 - On the Account page, a **Use in Backup Script** button saves your API key directly to the script
 
+**Screenshot:**
+
+![backups.png](images/backups.png)
+
 **Install:**
 https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/editor-backups.user.js
 
