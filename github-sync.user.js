@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TRMNL GitHub Sync
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      0.0.3
+// @version      0.0.4
 // @description  Push your TRMNL plugin code to a GitHub repository and pull it back on demand.
 // @author       ExcuseMi
 // @match        https://trmnl.com/plugin_settings
@@ -2199,7 +2199,7 @@
       .dark .gh-list-badge:hover { color: #e5e7eb; background: #374151; border-color: #4b5563; }
       .gh-list-badge-repo {
         font-size: 0.7rem; font-family: ui-monospace, monospace;
-        max-width: 14ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        max-width: 22ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
       }
 
       /* Repo picker dropdown */
