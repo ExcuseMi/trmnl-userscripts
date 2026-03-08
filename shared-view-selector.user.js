@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         TRMNL Shared View Selector
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.1.4
+// @version      1.1.5
 // @description  Adds a view layout combobox (shared page only). Fetches view templates from plugin archive and injects them into preview requests.
 // @author       ExcuseMi
 // @match        https://trmnl.com/plugin_settings/*/markup/edit*
-// @icon         https://trmnl.com/favicon.ico
+// @icon         https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/refs/heads/main/images/trmnl.svg
 // @require      https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js
 // @downloadURL  https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/shared-view-selector.user.js
 // @updateURL    https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/shared-view-selector.user.js

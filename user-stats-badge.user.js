@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         TRMNL User Stats Badge
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.4.4
+// @version      1.4.5
 // @description  Display user install/fork/connection badges on the right side of the Private Plugin header
 // @author       ExcuseMi
 // @match        https://trmnl.com/*
-// @icon         https://trmnl.com/favicon.ico
+// @icon         https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/refs/heads/main/images/trmnl.svg
 // @downloadURL  https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/user-stats-badge.user.js
 // @updateURL    https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/user-stats-badge.user.js
 // @grant        none

@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         TRMNL GitHub Sync
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      0.0.1
+// @version      0.0.2
 // @description  Push your TRMNL plugin code to a GitHub repository and pull it back on demand.
 // @author       ExcuseMi
 // @match        https://trmnl.com/plugin_settings
 // @match        https://trmnl.com/plugin_settings/*
 // @match        https://trmnl.com/account*
-// @icon         https://trmnl.com/favicon.ico
+// @icon         https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/refs/heads/main/images/trmnl.svg
 // @require      https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js
 // @downloadURL  https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/github-sync.user.js
 // @updateURL    https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/github-sync.user.js

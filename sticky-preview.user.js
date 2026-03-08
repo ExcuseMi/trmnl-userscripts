@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         TRMNL Sticky Preview
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.0.3
+// @version      1.0.4
 // @description  Adds a toggle to keep the plugin markup preview sticky while scrolling the editor.
 // @author       ExcuseMi
 // @match        https://trmnl.com/plugin_settings/*/markup/edit*
-// @icon         https://trmnl.com/favicon.ico
+// @icon         https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/refs/heads/main/images/trmnl.svg
 // @downloadURL  https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/sticky-preview.user.js
 // @updateURL    https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/sticky-preview.user.js
 // @grant        none

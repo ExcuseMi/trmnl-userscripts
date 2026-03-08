@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         TRMNL Editor Backups
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.3.2
+// @version      1.3.3
 // @description  Automatically snapshots the plugin archive before and after every save. View per-file diffs and restore any backup.
 // @author       ExcuseMi
 // @match        https://trmnl.com/plugin_settings/*
 // @match        https://trmnl.com/account*
-// @icon         https://trmnl.com/favicon.ico
+// @icon         https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/refs/heads/main/images/trmnl.svg
 // @require      https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js
 // @downloadURL  https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/editor-backups.user.js
 // @updateURL    https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/editor-backups.user.js

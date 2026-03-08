@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         TRMNL Private Plugin Categorizer
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.1.2
+// @version      1.1.3
 // @description  Add category filters and search to the private plugin page (with persistence, counters, and proper initial styling)
 // @author       ExcuseMi
 // @match        https://trmnl.com/*
-// @icon         https://trmnl.com/favicon.ico
+// @icon         https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/refs/heads/main/images/trmnl.svg
 // @downloadURL  https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/private-plugin-organiser.user.js
 // @updateURL    https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/private-plugin-organiser.user.js
 // @grant        none
