@@ -1,10 +1,10 @@
 // ==UserScript==
 // @name         TRMNL Master Recipe Badges
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.5.6
+// @version      1.5.7
 // @description  Add install and forks badges to Recipe Master plugins on list page and edit page
 // @author       ExcuseMi
-// @match        https://trmnl.com/plugin_settings*
+// @match        https://trmnl.com/*
 // @icon         https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/refs/heads/main/images/trmnl.svg
 // @downloadURL  https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/master-recipe-badge.user.js
 // @updateURL    https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/master-recipe-badge.user.js
@@ -268,6 +268,12 @@
     document.addEventListener('turbo:frame-load', () => {
         log('turbo:frame-load fired.');
         onNavigate();
+    });
+
+    window.navigation?.addEventListener('navigate', () => {
+        log('window.navigation navigate fired.');
+        // Defer so location reflects the new URL
+        setTimeout(onNavigate, 0);
     });
 
     if (document.readyState === 'loading') {
