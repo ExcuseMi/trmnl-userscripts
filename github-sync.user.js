@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TRMNL GitHub Sync
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      0.1.0
+// @version      0.1.1
 // @description  Push your TRMNL plugin code to a GitHub repository and pull it back on demand.
 // @author       ExcuseMi
 // @match        https://trmnl.com/*
@@ -2013,14 +2013,27 @@
       `</svg><span>Pull</span>`;
     pullBtn.addEventListener('click', openPanel);
 
-    // Insert into h2's row — if editor-backups already created a flex wrapper, reuse it
+    // Insert next to h2.
+    // editor-backups always wraps h2 in a new div.flex.items-center.gap-2 via insertBefore,
+    // so we must not create our own wrapper (would cause nesting). Instead:
+    //   • If a gap-2 wrapper is already present (editor-backups ran first) → append inside it.
+    //   • Otherwise append to h2's current parent and watch for editor-backups wrapping h2,
+    //     then move the buttons into the new wrapper so they stay adjacent to the title.
     const parent = h2.parentElement;
-    if (parent && parent.classList.contains('flex') && parent.classList.contains('items-center')) {
+    if (parent && parent.classList.contains('gap-2')) {
       parent.append(btn, pushBtn, pullBtn);
     } else {
-      const row = mk('div', 'flex items-center gap-2');
-      h2.parentNode.insertBefore(row, h2);
-      row.append(h2, btn, pushBtn, pullBtn);
+      parent.append(btn, pushBtn, pullBtn);
+      // Watch in case editor-backups runs after us and wraps h2
+      const wrapObs = new MutationObserver(() => {
+        const newParent = h2.parentElement;
+        if (newParent !== parent && newParent.classList.contains('gap-2')) {
+          newParent.append(btn, pushBtn, pullBtn);
+          wrapObs.disconnect();
+        }
+      });
+      wrapObs.observe(parent, { childList: true });
+      setTimeout(() => wrapObs.disconnect(), 10_000);
     }
 
     // Async: check if GitHub has newer files, show spinner on main btn while checking
