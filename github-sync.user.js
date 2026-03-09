@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TRMNL GitHub Sync
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      0.0.8
+// @version      0.0.9
 // @description  Push your TRMNL plugin code to a GitHub repository and pull it back on demand.
 // @author       ExcuseMi
 // @match        https://trmnl.com/plugin_settings*
@@ -1320,6 +1320,7 @@
       if (normalized) {
         repoIn.value = normalized;
         saveConfig(pluginId, { ...getConfig(pluginId), repo: normalized });
+        doRemoteSave();
         if (getToken()) {
           repoStatus.className   = 'text-xs mt-1 text-gray-500 dark:text-gray-400 italic';
           repoStatus.textContent = 'Checking repository…';
@@ -1392,6 +1393,7 @@
     branchIn.addEventListener('change', () => {
       saveConfig(pluginId, { ...getConfig(pluginId), branch: branchIn.value.trim() });
       cfgSummary.textContent = `${repoIn.value.trim() || cfg.repo} · ${branchIn.value.trim() || 'main'}`;
+      doRemoteSave();
     });
     branchGroup.appendChild(branchIn);
     cfgBody.appendChild(branchGroup);
@@ -1407,6 +1409,7 @@
     });
     pathIn.addEventListener('change', () => {
       saveConfig(pluginId, { ...getConfig(pluginId), path: pathIn.value.trim() });
+      doRemoteSave();
     });
     pathGroup.append(pathIn, pathHint);
     pathGroup.appendChild(mk('p', 'text-xs text-gray-500 dark:text-gray-400',
@@ -1417,7 +1420,7 @@
     // Commit message
     const msgGroup = mkFieldGroup('Commit message');
     const msgIn    = mkInput('TRMNL sync: {name} (plugin {id})', cfg.commitMsg);
-    msgIn.addEventListener('change', () => saveConfig(pluginId, { ...getConfig(pluginId), commitMsg: msgIn.value.trim() }));
+    msgIn.addEventListener('change', () => { saveConfig(pluginId, { ...getConfig(pluginId), commitMsg: msgIn.value.trim() }); doRemoteSave(); });
     msgGroup.appendChild(msgIn);
     msgGroup.appendChild(mk('p', 'text-xs text-gray-500 dark:text-gray-400 mt-1',
       '{id} = plugin ID, {name} = plugin name.'
@@ -1433,7 +1436,7 @@
     autoChk.className =
       'mt-0.5 h-4 w-4 rounded border-gray-300 dark:border-gray-600 cursor-pointer flex-shrink-0 ' +
       'text-primary-600 focus:ring-primary-500';
-    autoChk.addEventListener('change', () => saveConfig(pluginId, { ...getConfig(pluginId), autoPush: autoChk.checked }));
+    autoChk.addEventListener('change', () => { saveConfig(pluginId, { ...getConfig(pluginId), autoPush: autoChk.checked }); doRemoteSave(); });
 
     const autoLbl = mk('label', 'flex flex-col cursor-pointer select-none');
     autoLbl.htmlFor = 'gh-autopush-toggle';
