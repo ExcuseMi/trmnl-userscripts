@@ -1,9 +1,8 @@
 // ==UserScript==
 // @name         TRMNL No Floating Sidebar
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @description  Moves the floating bottom sidebar into the top nav and adds a Private Plugins button
-// @version      1.4.0
-// @description  Moves the floating bottom sidebar
+// @description  Moves the floating sidebar to the top nav, adds Private Plugins and Analytics buttons, and shows per-layout usage counts on the markup editor tabs
+// @version      1.4.2
 // @author       ExcuseMi
 // @match        https://trmnl.com/*
 // @icon         https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/refs/heads/main/images/trmnl.svg
@@ -29,19 +28,12 @@
     const ANALYTICS_CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
     const PLUGIN_STATS_KEY    = 'trmnl_plugin_stats';
-    const MARKUP_BADGE_ID     = 'trmnl-markup-stat-badge';
 
     const SIZE_TO_STAT = {
         markup_full:             'full',
         markup_half_horizontal:  'half_horizontal',
         markup_half_vertical:    'half_vertical',
         markup_quadrant:         'quadrant',
-    };
-    const SIZE_TO_LABEL = {
-        markup_full:             'Full',
-        markup_half_horizontal:  'Half Horizontal',
-        markup_half_vertical:    'Half Vertical',
-        markup_quadrant:         'Quadrant',
     };
 
     const CUSTOM_NAV_BUTTONS = [
@@ -64,15 +56,14 @@
 
             let hasError = false, hasDegraded = false;
 
+            // Use colour class only — language-independent
             doc.querySelectorAll('span.text-red-500').forEach(span => {
-                if (span.textContent.trim() !== 'Erroring') return;
                 const val = span.closest('p')?.nextElementSibling?.nextElementSibling
                     ?.querySelector('span')?.textContent ?? '0';
                 if (parseFloat(val) > 0) hasError = true;
             });
 
             doc.querySelectorAll('span.text-yellow-500').forEach(span => {
-                if (span.textContent.trim() !== 'Degraded') return;
                 const val = span.closest('p')?.nextElementSibling?.nextElementSibling
                     ?.querySelector('span')?.textContent ?? '0';
                 if (parseFloat(val) > 0) hasDegraded = true;
@@ -91,15 +82,14 @@
                 const id = idMatch[1];
 
                 const statsText = row.querySelector('p.text-xs span')?.textContent ?? '';
-                const pick = label => {
-                    const m = statsText.match(new RegExp(label + ':\\s*(\\d+)'));
-                    return m ? parseInt(m[1], 10) : 0;
-                };
+                // Extract numbers positionally — language-independent
+                // Expected order: Full | Half Vertical | Half Horizontal | Quadrant
+                const nums = (statsText.match(/\d+/g) ?? []).map(Number);
                 pluginStats[id] = {
-                    full:             pick('Full'),
-                    half_vertical:    pick('Half Vertical'),
-                    half_horizontal:  pick('Half Horizontal'),
-                    quadrant:         pick('Quadrant'),
+                    full:            nums[0] ?? 0,
+                    half_vertical:   nums[1] ?? 0,
+                    half_horizontal: nums[2] ?? 0,
+                    quadrant:        nums[3] ?? 0,
                 };
             });
             if (Object.keys(pluginStats).length) {
@@ -128,56 +118,62 @@
         if (status) applyAnalyticsStatus(status);
     }
 
-    function getMarkupEditContext() {
-        const m = location.pathname.match(/\/plugin_settings\/(\d+)\/markup\/edit/);
-        if (!m) return null;
-        const size = new URLSearchParams(location.search).get('size');
-        if (!SIZE_TO_STAT[size]) return null;
-        return { pluginId: m[1], statKey: SIZE_TO_STAT[size], label: SIZE_TO_LABEL[size] };
-    }
+    function injectTabCounts() {
+        const pluginId = location.pathname.match(/\/plugin_settings\/(\d+)\//)?.[1];
+        if (!pluginId) return false;
 
-    function injectMarkupStatBadge() {
-        const ctx = getMarkupEditContext();
-
-        // Remove badge when navigating away from markup edit pages
-        const existing = document.getElementById(MARKUP_BADGE_ID);
-        if (!ctx) { existing?.remove(); return true; }
-
-        let count = null;
+        let stats;
         try {
             const all = JSON.parse(localStorage.getItem(PLUGIN_STATS_KEY) || '{}');
-            if (all[ctx.pluginId]) count = all[ctx.pluginId][ctx.statKey] ?? 0;
+            stats = all[pluginId];
         } catch (_) {}
+        if (!stats) return false;
 
-        if (count === null) return false; // no data yet — caller should trigger a fetch
+        const tabs = document.querySelectorAll('#markup-tabs a[href*="size=markup_"]');
+        if (!tabs.length) return false;
 
-        if (existing) {
-            // Update in place when switching sizes on the same plugin
-            existing.querySelector('[data-count]').textContent = `${count} on ${ctx.label}`;
-            return true;
-        }
+        tabs.forEach(tab => {
+            if (tab.dataset.countInjected) return;
+            const size = new URL(tab.href).searchParams.get('size');
+            const statKey = SIZE_TO_STAT[size];
+            if (!statKey) return;
+            const count = stats[statKey] ?? 0;
+            const badge = document.createElement('span');
+            badge.style.cssText = 'margin-left:0.25rem;font-size:0.75rem;opacity:0.6;font-weight:400;';
+            badge.textContent = `(${count})`;
+            tab.appendChild(badge);
+            tab.dataset.countInjected = 'true';
+        });
 
-        const badge = document.createElement('div');
-        badge.id = MARKUP_BADGE_ID;
-        badge.style.cssText = 'position:fixed;bottom:1.25rem;right:1.25rem;z-index:9999;display:flex;align-items:center;gap:0.375rem;';
-        badge.className = 'px-3 py-1.5 rounded-lg text-xs font-medium shadow-lg bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900';
-        badge.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:13px;height:13px;flex-shrink:0">
-                <path d="M18 18V2H2v16h16zM16 5H4V4h12v1zM7 7v3h3c0 1.66-1.34 3-3 3s-3-1.34-3-3 1.34-3 3-3zm1 2V7c1.1 0 2 .9 2 2H8zm8-1h-4V7h4v1zm0 3h-4V9h4v2zm0 2h-4v-1h4v1zm0 3H4v-1h12v1z"/>
-            </svg>
-            <span data-count>${count} on ${ctx.label}</span>`;
-        document.body.appendChild(badge);
-        log(`Markup badge: ${count} instances on ${ctx.label} for plugin ${ctx.pluginId}`);
+        log('Tab counts injected for plugin', pluginId);
         return true;
     }
 
+    function waitForMarkupTabs() {
+        if (injectTabCounts()) return;
+
+        const obs = new MutationObserver(() => {
+            if (injectTabCounts()) obs.disconnect();
+        });
+        obs.observe(document.body, { childList: true, subtree: true });
+        setTimeout(() => obs.disconnect(), 15_000);
+    }
+
     async function handleMarkupEditPage() {
-        if (!getMarkupEditContext()) return;
-        if (!injectMarkupStatBadge()) {
-            // Stats not cached yet — fetch analytics to populate them
+        if (!location.pathname.match(/\/plugin_settings\/\d+\/markup\/edit/)) return;
+
+        const pluginId = location.pathname.match(/\/plugin_settings\/(\d+)\//)?.[1];
+        let hasStats = false;
+        try {
+            const all = JSON.parse(localStorage.getItem(PLUGIN_STATS_KEY) || '{}');
+            hasStats = !!all[pluginId];
+        } catch (_) {}
+
+        if (!hasStats) {
+            // Stats not cached yet — fetch analytics first, then inject
             await fetchAndCacheAnalyticsStatus();
-            injectMarkupStatBadge();
         }
+        waitForMarkupTabs();
     }
 
     function updateActiveStates() {

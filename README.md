@@ -64,7 +64,12 @@ https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/better-variabl
 
 ## 🚫 No Floating Sidebar
 
-Moves the floating bottom sidebar into the top navigation bar, creating a cleaner and more compact editing interface.
+Moves the floating bottom sidebar into the top navigation bar and adds several quality-of-life enhancements.
+
+- **Compact top nav** — the floating sidebar is moved into the top nav and compacted, freeing up screen space
+- **Private Plugins button** — quick-access nav button linking to the private plugins page, with active-state highlighting
+- **Analytics button** — nav button linking to the analytics page; the icon turns **red** when plugins are erroring, **orange** when degraded, and stays grey when healthy (status is fetched once per hour and cached)
+- **Markup editor tab counts** — on the markup editor, each layout tab (Full, Half Vertical, Half Horizontal, Quadrant) shows a live usage count pulled from the Analytics "At a Glance" widget, so you can see at a glance how many devices use each layout
 
 **Screenshots:**
 
