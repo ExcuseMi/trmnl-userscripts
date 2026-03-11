@@ -2,7 +2,7 @@
 // @name         TRMNL No Floating Sidebar
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
 // @description  Moves the floating sidebar to the top nav, adds Private Plugins and Analytics buttons, and shows per-layout usage counts on the markup editor tabs
-// @version      1.4.2
+// @version      1.4.3
 // @author       ExcuseMi
 // @match        https://trmnl.com/*
 // @icon         https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/refs/heads/main/images/trmnl.svg
@@ -26,6 +26,7 @@
 
     const ANALYTICS_CACHE_KEY = 'trmnl_analytics_status';
     const ANALYTICS_CACHE_TTL = 60 * 60 * 1000; // 1 hour
+    const ANALYTICS_CACHE_VERSION = 2; // bump to invalidate old cached results
 
     const PLUGIN_STATS_KEY    = 'trmnl_plugin_stats';
 
@@ -57,20 +58,25 @@
             let hasError = false, hasDegraded = false;
 
             // Use colour class only — language-independent
+            // Parse instance count (e.g. "0%\n1 instance") rather than the % value,
+            // since a category can have 0% but still have instances (e.g. 1 of 658).
+            function instanceCount(span) {
+                const text = span.closest('p')?.nextElementSibling?.nextElementSibling
+                    ?.querySelector('span')?.textContent ?? '';
+                const m = text.match(/(\d+)\s+instance/);
+                return m ? parseInt(m[1], 10) : 0;
+            }
+
             doc.querySelectorAll('span.text-red-500').forEach(span => {
-                const val = span.closest('p')?.nextElementSibling?.nextElementSibling
-                    ?.querySelector('span')?.textContent ?? '0';
-                if (parseFloat(val) > 0) hasError = true;
+                if (instanceCount(span) > 0) hasError = true;
             });
 
             doc.querySelectorAll('span.text-yellow-500').forEach(span => {
-                const val = span.closest('p')?.nextElementSibling?.nextElementSibling
-                    ?.querySelector('span')?.textContent ?? '0';
-                if (parseFloat(val) > 0) hasDegraded = true;
+                if (instanceCount(span) > 0) hasDegraded = true;
             });
 
             const status = hasError ? 'error' : hasDegraded ? 'degraded' : 'healthy';
-            localStorage.setItem(ANALYTICS_CACHE_KEY, JSON.stringify({ status, ts: Date.now() }));
+            localStorage.setItem(ANALYTICS_CACHE_KEY, JSON.stringify({ status, ts: Date.now(), v: ANALYTICS_CACHE_VERSION }));
 
             // Parse per-plugin layout counts from the "At a Glance" widget
             const pluginStats = {};
@@ -111,7 +117,7 @@
         if (location.pathname !== '/analytics') {
             try {
                 const cached = JSON.parse(localStorage.getItem(ANALYTICS_CACHE_KEY));
-                if (cached && (Date.now() - cached.ts) < ANALYTICS_CACHE_TTL) status = cached.status;
+                if (cached && cached.v === ANALYTICS_CACHE_VERSION && (Date.now() - cached.ts) < ANALYTICS_CACHE_TTL) status = cached.status;
             } catch (_) {}
         }
         if (!status) status = await fetchAndCacheAnalyticsStatus();
