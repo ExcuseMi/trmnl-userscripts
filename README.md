@@ -118,7 +118,7 @@ https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/markup-demo-ta
 ---
 ## 📋 Private Plugin Organiser
 
-Adds category filters (All, Recipe Master, Fork, Install, Private) and a search bar to the private plugins page. Remembers your last selection and resets if no plugins match, ensuring you always see relevant content.
+Adds category filters (All, Recipe Master, Fork, Install, Private) and a search bar to the private plugins page. Remembers your last selection. If a category has no results for the current search, it automatically switches to All.
 
 **Screenshot:**
 

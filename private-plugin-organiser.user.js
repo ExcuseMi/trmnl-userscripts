@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TRMNL Private Plugin Categorizer
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.1.4
+// @version      1.1.5
 // @description  Add category filters and search to the private plugin page (with persistence, counters, and proper initial styling)
 // @author       ExcuseMi
 // @match        https://trmnl.com/*
@@ -262,20 +262,7 @@
 
         function checkAndHandleNoResults(visibleCount) {
             if (visibleCount === 0) {
-                // Try switching to All category first
-                if (!switchToAllIfNoResults()) {
-                    // If still no results in All (no plugins match search at all), do a full reset
-                    warn('No plugins match search at all — resetting to defaults.');
-                    activeCategory = 'all';
-                    searchTerm = '';
-                    searchInput.value = '';
-                    categoryButtons.forEach(btn => {
-                        btn.className = getButtonClass(btn.dataset.category, btn.dataset.category === 'all');
-                    });
-                    updateCounts();
-                    saveFilters('all', '');
-                    applyFilters();
-                }
+                switchToAllIfNoResults();
             }
         }
 
