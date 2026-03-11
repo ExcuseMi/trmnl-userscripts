@@ -99,6 +99,20 @@ The script automatically fetches the corresponding view templates from the plugi
 https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/shared-view-selector.user.js
 
 ---
+
+## ▶️ Markup Demo Tab
+
+Adds a **Demo** tab to the markup editor that loads the recipe's demo page in an inline iframe, showing all layout previews (Full, Half Horizontal, Half Vertical, Quadrant) with the full device picker — without leaving the editor.
+
+- **Inline iframe** — demo content appears inside the editor card, below the tab bar, with the rest of the page navigation intact
+- **Full viewport width** — the iframe breaks out of the card's column width so wider devices like TRMNL X display without horizontal scrolling
+- **Full viewport height** — iframe height is calculated dynamically to fill the remaining screen below the tabs
+- **No reload** — switching back and forth between Demo and other tabs does not re-fetch the demo page
+
+**Install:**
+https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/markup-demo-tab.user.js
+
+---
 ## 📋 Private Plugin Organiser
 
 Adds category filters (All, Recipe Master, Fork, Install, Private) and a search bar to the private plugins page. Remembers your last selection and resets if no plugins match, ensuring you always see relevant content.
