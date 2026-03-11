@@ -109,6 +109,9 @@ Adds a **Demo** tab to the markup editor that loads the recipe's demo page in an
 - **Full viewport height** — iframe height is calculated dynamically to fill the remaining screen below the tabs
 - **No reload** — switching back and forth between Demo and other tabs does not re-fetch the demo page
 
+**Screenshot:**
+![markup-demo-tab](images/markup-demo-tab.png)
+
 **Install:**
 https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/markup-demo-tab.user.js
 
