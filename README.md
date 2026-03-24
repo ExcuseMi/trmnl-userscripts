@@ -191,7 +191,7 @@ https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/user-stats-bad
 # Deprecated scripts
 
 ## 💾 Editor Backups
-**Deprecated because GitHub Sync is far better and the one I'll be using myself**
+**Deprecated because implemented inside TRNML now)**
 Automatically snapshots the full plugin archive **before and after every save**. View per-file diffs between any two snapshots and restore a previous version with one click. A backup count badge appears in the page header on all plugin settings pages.
 
 - Tracks all archive files: `shared`, `full`, `half_horizontal`, `half_vertical`, `quadrant` layouts, `settings.yml`, and `transform.js`
