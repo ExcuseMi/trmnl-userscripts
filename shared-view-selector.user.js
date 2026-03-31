@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TRMNL Shared View Selector
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.1.6
+// @version      1.1.5
 // @description  Adds a view layout combobox (shared page only). Fetches view templates from plugin archive and injects them into preview requests.
 // @author       ExcuseMi
 // @match        https://trmnl.com/plugin_settings/*/markup/edit*
@@ -198,15 +198,11 @@
 
         if (selectedClass) {
 
-          const userMarkup =
-            originalFormData.get('markup') ||
-            originalFormData.get('plugin_setting[settings][markup_shared]') ||
-            (() => {
-              const textarea = document.querySelector(
-                '[data-codemirror-target="textarea"], [data-markup-editor-target="textarea"]'
-              );
-              return textarea ? textarea.value : '';
-            })();
+          const textarea = document.querySelector(
+            '[data-codemirror-target="textarea"], [data-markup-editor-target="textarea"]'
+          );
+
+          const userMarkup = textarea ? textarea.value : '';
 
           const controller = document.querySelector(
             '[data-controller="markup-editor"]'
