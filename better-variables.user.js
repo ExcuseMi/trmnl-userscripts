@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TRMNL Better Variables
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.1.3
+// @version      1.1.4
 // @description  Adds an interactive JSON tree viewer + YAML export with copy features inside the existing variables accordion.
 // @author       ExcuseMi
 // @match        https://trmnl.com/plugin_settings/*/markup/edit*
@@ -154,7 +154,7 @@
     if (val === null)                  { span.className = 'jv-null'; span.textContent = 'null'; }
     else if (typeof val === 'boolean') { span.className = 'jv-bool'; span.textContent = String(val); }
     else if (typeof val === 'number')  { span.className = 'jv-num';  span.textContent = String(val); }
-    else                               { span.className = 'jv-str';  span.textContent = `"${val}"`; }
+    else                               { span.className = 'jv-str';  span.textContent = `"${val.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t')}"`; }
     if (path) {
       span.classList.add('jv-copy');
       span.title = 'Click to copy value';
