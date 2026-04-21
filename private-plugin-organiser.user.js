@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         TRMNL Private Plugin Categorizer
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
-// @version      1.1.5
+// @version      1.1.6
 // @description  Add category filters and search to the private plugin page (with persistence, counters, and proper initial styling)
 // @author       ExcuseMi
 // @match        https://trmnl.com/*
@@ -151,8 +151,12 @@
         }
 
         function saveFilters(category, searchTerm) {
-            localStorage.setItem(STORAGE_KEY_CATEGORY, category);
-            localStorage.setItem(STORAGE_KEY_SEARCH, searchTerm);
+            try {
+                localStorage.setItem(STORAGE_KEY_CATEGORY, category);
+                localStorage.setItem(STORAGE_KEY_SEARCH, searchTerm);
+            } catch (e) {
+                warn('localStorage quota exceeded, filters not persisted:', e);
+            }
         }
 
         let { category: activeCategory, searchTerm } = loadStoredFilters();
