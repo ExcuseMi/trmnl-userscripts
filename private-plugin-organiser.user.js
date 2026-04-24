@@ -2,7 +2,7 @@
 // @name         TRMNL Private Plugin Categorizer
 // @namespace    https://github.com/ExcuseMi/trmnl-userscripts
 // @version      1.1.6
-// @description  Add category filters and search to the private plugin page (with persistence, counters, and proper initial styling)
+// @description  [DEPRECATED] Implemented natively by TRMNL. Add category filters and search to the private plugin page (with persistence, counters, and proper initial styling)
 // @author       ExcuseMi
 // @match        https://trmnl.com/*
 // @icon         https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/refs/heads/main/images/trmnl.svg
@@ -11,7 +11,9 @@
 // @grant        none
 // ==/UserScript==
 
-(function() {
+// DEPRECATED: This functionality is now implemented natively by TRMNL.
+// Script is kept for reference but disabled.
+if (false) (function() {
     'use strict';
 
     const LOG_PREFIX = '[TRMNL Organiser]';

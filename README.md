@@ -116,19 +116,6 @@ Adds a **Demo** tab to the markup editor that loads the recipe's demo page in an
 https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/markup-demo-tab.user.js
 
 ---
-## 📋 Private Plugin Organiser
-
-Adds category filters (All, Recipe Master, Fork, Install, Private) and a search bar to the private plugins page. Remembers your last selection. If a category has no results for the current search, it automatically switches to All.
-
-**Screenshot:**
-
-![private-plugin-organiser](images/private-plugin-organiser.png)
-
-
-**Install:**
-https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/private-plugin-organiser.user.js
-
-
 ## ✏️ Recipe Edit Button
 
 Adds an **Edit** button on recipe pages you own. The button only appears when the logged-in user matches the recipe owner, and links directly to the plugin settings edit page.
@@ -189,6 +176,12 @@ https://raw.githubusercontent.com/ExcuseMi/trmnl-userscripts/main/user-stats-bad
 ---
 
 # Deprecated scripts
+
+## 📋 Private Plugin Organiser
+**Deprecated — implemented natively by TRMNL.**
+Adds category filters (All, Recipe Master, Fork, Install, Private) and a search bar to the private plugins page. Remembers your last selection. If a category has no results for the current search, it automatically switches to All.
+
+---
 
 ## 💾 Editor Backups
 **Deprecated because implemented inside TRNML now)**
